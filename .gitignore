@@ -1,0 +1,55 @@
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# Compiled
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# LaTeX
+*.log
+*.aux
+*.synctex.gz
+*.bbl
+*.blg
+*.xml
+*blx.bib
+*.thm
+*.out
+*.fdb_latexmk
+*.fls
+*.nav
+*.snm
+*.toc
+*.vrb
+
+# LyX
+*.lyx~
+
+# Emacs
+*[#]*[#]
+*[#]*
+_region_.tex
+
+# RStudio
+*.Rhistory
+.Rproj.user
+*.rda
+*.RData
+
+# Directories
+
+# Ignore all CSS, WOFF, and JS files in the 'libs' directory and subdirectories
+scripts/first_attempt_files/libs/**/*.css
+scripts/first_attempt_files/libs/**/*.woff
+scripts/first_attempt_files/libs/**/*.js
