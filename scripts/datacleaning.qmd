@@ -16,13 +16,13 @@ import xarray as xr
 import cfgrib
 
 # Data Import
-weather_12_2023 = xr.load_dataset("../data/data_CT/download_ERA5_LAND_package_2023_11.grib")
-
+weather_12_2023 = cfgrib.open_datasets("../data/data_CT/download_ERA5_LAND_package_2023_11.grib")
 ```
 
 In this file, we will experiment with uploading and analyzing the data contained in the GRIB files for CT weather.
 
 ``` {python}
 
+weather_12_2023
 
 ```
