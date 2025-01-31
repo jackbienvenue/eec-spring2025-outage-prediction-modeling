@@ -1,0 +1,28 @@
+---
+title: Data Cleaning Sample, GRIB Files
+format: html
+author: Jack Bienvenue
+Date: "January 31, 2025"
+---
+
+``` {python}
+#| echo: false
+
+# Package Import
+import pandas as pd
+import geopandas as gpd
+import numpy as np
+import xarray as xr
+import cfgrib
+
+# Data Import
+weather_12_2023 = xr.load_dataset("../data/data_CT/download_ERA5_LAND_package_2023_11.grib")
+
+```
+
+In this file, we will experiment with uploading and analyzing the data contained in the GRIB files for CT weather.
+
+``` {python}
+
+
+```
