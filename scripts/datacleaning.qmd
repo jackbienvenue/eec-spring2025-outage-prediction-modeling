@@ -29,6 +29,50 @@ weather_12_2023
 
 In this file, we will experiment with uploading and analyzing the data contained in the GRIB files for CT weather.
 
+Sample (with error):
 ``` {python}
+#| eval: false
+#| echo: false
+
 alt_weather = xr.open_dataset("../data/data_CT/download_ERA5_LAND_package_1979_10.grib", engine = 'cfgrib')
 ```
+
+Note that prior to processing this all, I deleted the .idx files in the dataset, which were extra files. 
+
+Trial of simple grib conversion mechanism:
+
+``` {python}
+#| eval: false
+#| echo: true
+
+with cfgrib.open_dataset("../data/data_CT/download_ERA5_LAND_package_1999_10.grib") as grib_file:
+
+    df = grib_file.to_dataframe()
+
+df
+```
+
+Diagnostics:
+
+```{python}
+#| eval: false
+#| echo: false
+
+with cfgrib.open_dataset("../data/data_CT/download_ERA5_LAND_package_1999_10.grib") as grib_file:
+    print(grib_file)
+```
+
+Trial of solution:
+
+```{python}
+#| eval: true
+#| echo: true
+
+
+```
+
+Error mentions 'skt', short name for variable "Skin Temperature"---"This parameter is the temperature of the surface of the Earth.
+
+The skin temperature is the theoretical temperature that is required to satisfy the surface energy balance. It represents the temperature of the uppermost surface layer, which has no heat capacity and so can respond instantaneously to changes in surface fluxes. Skin temperature is calculated differently over land and sea.""
+
+Also, it skips 'rsn', 'sd', 'src'
