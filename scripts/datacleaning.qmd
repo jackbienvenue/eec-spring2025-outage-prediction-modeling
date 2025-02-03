@@ -10,11 +10,10 @@ Date: "January 31, 2025"
 
 # Package Import
 import pandas as pd
-import geopandas as gpd
 import numpy as np
-import xarray as xr
 import cfgrib
-import matplotlib.pyplot as plt
+
+import folium
 ```
 
 We will begin the data cleaning process by transitioning GRIB files into dataframes so that we can later collect them into a single CSV for further analysis.
@@ -78,8 +77,6 @@ Note: all NaNs in this dataset coexist with other NaNs.
 ```{python}
 #| eval: true
 #| echo: true
-
-import folium
 
 # Check columns to ensure 'latitude' and 'longitude' are correctly named
 print(all_nan_df.columns)
