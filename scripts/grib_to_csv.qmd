@@ -1,0 +1,38 @@
+---
+title: Converting Folder of GRIB files to CSV in time series
+format: html
+author: Jack Bienvenue
+Date: "February 3, 2025"
+---
+
+We discovered how to properly bring in the GRIB files after some difficulty in our initial data cleaning script. Now, let's write some code to allow for the combination of all the GRIB files in our folder into a single CSV for us to be able to process it more effectively.
+
+```{python}
+#| echo: false
+#| eval: true
+
+# Package import
+import pandas as pd
+
+```
+
+```{python}
+#| echo: false
+#| eval: true
+
+"""
+Here, I'm electing to write this process as a function so that in the future, you or I could reuse this function or adapt it to create similar long-term time series data for weather data from ERA5. 
+
+ARGUMENTS:
+earliest_file - the EARLIEST chronological file
+latest_file - the LATEST chronological file
+input_directory - input directory which hosts the files
+output_path - output path for new csv
+"""
+
+def grib_folder_processing(earliest_file, latest_file, input_directory, output_path):
+
+    
+
+
+```
