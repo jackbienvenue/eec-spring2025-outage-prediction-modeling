@@ -60,7 +60,51 @@ nan_count = daily_df['t2m'].isna().sum()
 print('Count of NaNs:', nan_count)
 ```
 
-Across the daily & hourly dfs and over the time series, there seems to be always be a nan_count of 1550. Let's investigate this.
+Across the daily & hourly dfs and over the time series, there seems to always be a nan_count of 1550. Let's investigate this.
+
+```{python}
+#| eval: true
+#| echo: true
+
+# First, make subset of all NaNs:
+
+all_nan_df = hourly_df[hourly_df['lai_hv'].isna()]
+
+print(all_nan_df)
+```
+
+Note: all NaNs in this dataset coexist with other NaNs.
+
+```{python}
+#| eval: true
+#| echo: true
+
+import folium
+
+# Check columns to ensure 'latitude' and 'longitude' are correctly named
+print(all_nan_df.columns)
+
+# Reset index if needed
+all_nan_df = all_nan_df.reset_index()
+
+# Now filter rows with NaN values in latitude and longitude
+df_cleaned = all_nan_df.dropna(subset=['latitude', 'longitude'])
+
+# Create a folium map centered around the mean latitude and longitude
+map_center = [df_cleaned['latitude'].mean(), df_cleaned['longitude'].mean()]
+my_map = folium.Map(location=map_center, zoom_start=10)
+
+# Plot each point on the map
+for idx, row in df_cleaned.iterrows():
+    folium.Marker(
+        location=[row['latitude'], row['longitude']],
+        popup=row['time']
+    ).add_to(my_map)
+
+# Display the map (works in Jupyter or saves to file)
+my_map
+
+```
 
 
 ### APPENDIX:
