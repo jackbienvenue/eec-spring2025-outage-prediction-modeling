@@ -17,59 +17,55 @@ import cfgrib
 import matplotlib.pyplot as plt
 ```
 
-``` {python}
-#| eval: false
+We will begin the data cleaning process by transitioning GRIB files into dataframes so that we can later collect them into a single CSV for further analysis.
 
-# Data Import
-weather_12_2023 = cfgrib.open_datasets("../data/data_CT/download_ERA5_LAND_package_2023_11.grib")
+GRIB files tend to be very tricky, and in our GRIB files I have found a persistent issue that comes when opening and reading them. This occurs, I presume, because there are two internal "step" (interval) systems being used, a 1-hour step, and a 24-hour step.
 
-# Print
-weather_12_2023
-```
+Below, I discovered a way to work around the issue by reading in a GRIB file with the backend keyword argument solved for the step lengths.
 
-In this file, we will experiment with uploading and analyzing the data contained in the GRIB files for CT weather.
 
-Sample (with error):
-``` {python}
-#| eval: false
-#| echo: false
-
-alt_weather = xr.open_dataset("../data/data_CT/download_ERA5_LAND_package_1979_10.grib", engine = 'cfgrib')
-```
-
-Note that prior to processing this all, I deleted the .idx files in the dataset, which were extra files. 
-
-Trial of simple grib conversion mechanism:
-
-``` {python}
-#| eval: false
-#| echo: true
-
-with cfgrib.open_dataset("../data/data_CT/download_ERA5_LAND_package_1999_10.grib") as grib_file:
-
-    df = grib_file.to_dataframe()
-
-df
-```
-
-Diagnostics:
 
 ```{python}
-#| eval: false
-#| echo: false
+# Set the GRIB file path:
 
-with cfgrib.open_dataset("../data/data_CT/download_ERA5_LAND_package_1999_10.grib") as grib_file:
-    print(grib_file)
+grib_path = "../data/data_CT/download_ERA5_LAND_package_1982_10.grib"
+
+# Read in hourly data by using 1-hour intervals:
+
+hourly_data = cfgrib.open_dataset(grib_path, backend_kwargs={'filter_by_keys': {'typeOfLevel': 'surface', 'step': 1}})
+
+# Read in daily data by using 24-hour intervals:
+
+daily_data = cfgrib.open_dataset(grib_path, backend_kwargs={'filter_by_keys': {'typeOfLevel': 'surface', 'step': 24}})
+
+# Now, print these as dataframes:
+
+hourly_df = hourly_data.to_dataframe()
+daily_df = daily_data.to_dataframe()
+
+# Let's see more rows to check for NaN's:
+
+pd.set_option('display.max_rows', 100)
+
+# Display dataframes (if you would like to see them)
+#####display(hourly_df)
+#####display(daily_df)
+
+# Count NaNs in column of new dfs:
+
+nan_count = daily_df['t2m'].isna().sum()
+
+# Print count of NAs in column:
+
+print('Count of NaNs:', nan_count)
 ```
 
-Trial of solution:
-
-```{python}
-#| eval: true
-#| echo: true
+Across the daily & hourly dfs and over the time series, there seems to be always be a nan_count of 1550. Let's investigate this.
 
 
-```
+### APPENDIX:
+
+#### Error - skipping variables:
 
 Error mentions 'skt', short name for variable "Skin Temperature"---"This parameter is the temperature of the surface of the Earth.
 
