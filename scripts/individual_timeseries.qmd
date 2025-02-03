@@ -1,0 +1,8 @@
+---
+title: Converting Folder of GRIB files to CSV in time series
+format: html
+author: Jack Bienvenue
+Date: "February 3, 2025"
+---
+
+Now that we have converted the GRIB files to a CSV, we still have one wrinkle. The CSV contains entries from all of the grid cells. There are a few thousand centroids for these, so we need to make them into individual CSVs for later processing. 
