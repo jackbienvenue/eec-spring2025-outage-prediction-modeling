@@ -13,7 +13,8 @@ We discovered how to properly bring in the GRIB files after some difficulty in o
 
 # Package import
 import pandas as pd
-
+import os
+import cfgrib
 ```
 
 ```{python}
@@ -24,15 +25,57 @@ import pandas as pd
 Here, I'm electing to write this process as a function so that in the future, you or I could reuse this function or adapt it to create similar long-term time series data for weather data from ERA5. 
 
 ARGUMENTS:
-earliest_file - the EARLIEST chronological file
-latest_file - the LATEST chronological file
+earliest_file - the EARLIEST chronological file (NAME only, no prefixes)
+latest_file - the LATEST chronological file (NAME only, no prefixes)
 input_directory - input directory which hosts the files
 output_path - output path for new csv
+
+NOTES:
+
 """
 
 def grib_folder_processing(earliest_file, latest_file, input_directory, output_path):
+    # Extract year and month from the earliest and latest file names
+    earliest_year = int(earliest_file.split('_')[-1].split('.')[0])  # Extract year from filename
+    earliest_month = int(earliest_file.split('_')[-2])  # Extract month from filename
+    latest_year = int(latest_file.split('_')[-1].split('.')[0])  # Extract year from filename
+    latest_month = int(latest_file.split('_')[-2])  # Extract month from filename
 
-    
+    # Initialize an empty list to store DataFrames
+    df_list = []
 
+    # Loop through years and months
+    current_year, current_month = earliest_year, earliest_month
+    while (current_year < latest_year) or (current_year == latest_year and current_month <= latest_month):
+        # Construct the file name for the current year and month
+        file_name = f"download_ERA5_LAND_package_{current_year}_{current_month:02d}.grib"
+        file_path = os.path.join(input_directory, file_name)
 
+        # Check if the file exists
+        if os.path.exists(file_path):
+            try:
+                # Read the GRIB file and convert to DataFrame
+                hourly_data = cfgrib.open_dataset(file_path, backend_kwargs={'filter_by_keys': {'typeOfLevel': 'surface', 'step': 1}})
+                hourly_df = hourly_data.to_dataframe()
+                df_list.append(hourly_df)
+            except Exception as e:
+                print(f"Error processing file {file_name}: {e}")
+        else:
+            print(f"File {file_name} not found in directory.")
+
+        # Move to the next month
+        current_month += 1
+        if current_month > 12:  # Reset month and increment year if necessary
+            current_month = 1
+            current_year += 1
+
+    # Combine all DataFrames into one
+    combined_df = pd.concat(df_list)
+
+    # Sort the DataFrame chronologically
+    combined_df.sort_index(inplace=True)
+
+    # Save the combined DataFrame to a CSV file
+    combined_df.to_csv(output_path)
+    print(f"Combined data saved to {output_path}")
 ```
