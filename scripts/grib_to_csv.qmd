@@ -13,12 +13,12 @@ We discovered how to properly bring in the GRIB files after some difficulty in o
 
 # Package import
 import pandas as pd
-import os
 import cfgrib
+import os
 ```
 
 ```{python}
-#| echo: false
+#| echo: true
 #| eval: true
 
 """
@@ -27,19 +27,19 @@ Here, I'm electing to write this process as a function so that in the future, yo
 ARGUMENTS:
 earliest_file - the EARLIEST chronological file (NAME only, no prefixes)
 latest_file - the LATEST chronological file (NAME only, no prefixes)
-input_directory - input directory which hosts the files
-output_path - output path for new csv
+input_directory - input directory which hosts the files (use relative path)
+output_path - output path for new csv (name it at the end of the path)
 
 NOTES:
-
+Dependencies: pandas, cfgrib, os
 """
 
 def grib_folder_processing(earliest_file, latest_file, input_directory, output_path):
     # Extract year and month from the earliest and latest file names
-    earliest_year = int(earliest_file.split('_')[-1].split('.')[0])  # Extract year from filename
-    earliest_month = int(earliest_file.split('_')[-2])  # Extract month from filename
-    latest_year = int(latest_file.split('_')[-1].split('.')[0])  # Extract year from filename
-    latest_month = int(latest_file.split('_')[-2])  # Extract month from filename
+    earliest_year = int(earliest_file.split('_')[-2])  # Extract year from filename (second-to-last part)
+    earliest_month = int(earliest_file.split('_')[-1].split('.')[0])  # Extract month from filename (last part before extension)
+    latest_year = int(latest_file.split('_')[-2])  # Extract year from filename (second-to-last part)
+    latest_month = int(latest_file.split('_')[-1].split('.')[0])  # Extract month from filename (last part before extension)
 
     # Initialize an empty list to store DataFrames
     df_list = []
@@ -51,23 +51,34 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_p
         file_name = f"download_ERA5_LAND_package_{current_year}_{current_month:02d}.grib"
         file_path = os.path.join(input_directory, file_name)
 
-        # Check if the file exists
-        if os.path.exists(file_path):
+        # Debug: Print the file path being checked
+        print(f"Checking file: {file_path}")
+
+        # Check if the file exists and is a GRIB file (not an index file)
+        if os.path.exists(file_path) and file_name.endswith(".grib"):
             try:
+                # Debug: Print a message before attempting to read the file
+                print(f"Attempting to read file: {file_name}")
+
                 # Read the GRIB file and convert to DataFrame
                 hourly_data = cfgrib.open_dataset(file_path, backend_kwargs={'filter_by_keys': {'typeOfLevel': 'surface', 'step': 1}})
                 hourly_df = hourly_data.to_dataframe()
                 df_list.append(hourly_df)
+                print(f"Successfully processed file: {file_name}")
             except Exception as e:
                 print(f"Error processing file {file_name}: {e}")
         else:
-            print(f"File {file_name} not found in directory.")
+            print(f"File {file_name} not found in directory or is not a valid GRIB file.")
 
         # Move to the next month
         current_month += 1
         if current_month > 12:  # Reset month and increment year if necessary
             current_month = 1
             current_year += 1
+
+    # Check if any files were processed
+    if len(df_list) == 0:
+        raise ValueError("No valid GRIB files were processed. Check the input directory and file names.")
 
     # Combine all DataFrames into one
     combined_df = pd.concat(df_list)
@@ -78,4 +89,17 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_p
     # Save the combined DataFrame to a CSV file
     combined_df.to_csv(output_path)
     print(f"Combined data saved to {output_path}")
+
+# Example usage:
+# grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/sample_output1.csv")
+```
+
+Let's try to execute this function:
+
+```{python}
+#| echo: false
+#| eval: true
+
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv")
+
 ```
