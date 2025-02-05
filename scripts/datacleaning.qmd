@@ -65,7 +65,7 @@ Across the daily & hourly dfs and over the time series, there seems to always be
 #| eval: true
 #| echo: true
 
-# First, make subset of all NaNs:
+# First, make subset of all NaNs (they coincide so we select this arbitrary column):
 
 all_nan_df = hourly_df[hourly_df['lai_hv'].isna()]
 
@@ -75,7 +75,7 @@ print(all_nan_df)
 Note: all NaNs in this dataset coexist with other NaNs.
 
 ```{python}
-#| eval: true
+#| eval: false
 #| echo: true
 
 # Check columns to ensure 'latitude' and 'longitude' are correctly named
@@ -102,6 +102,37 @@ for idx, row in df_cleaned.iterrows():
 my_map
 
 ```
+
+Now, a map to see ALL the points:
+
+``` {python}
+#| eval: true
+#| echo: false
+
+hourly_df1 = hourly_df.head(1000)
+
+hourly_df1 = hourly_df1.reset_index()
+
+# Create a folium map centered around the mean latitude and longitude
+map_center = [hourly_df1['latitude'].mean(), hourly_df1['longitude'].mean()]
+my_map1 = folium.Map(location=map_center, zoom_start=10)
+
+# Plot each point on the map
+for idx, row in hourly_df1.iterrows():
+    folium.Marker(
+        location=[row['latitude'], row['longitude']],
+        popup=row['time']
+    ).add_to(my_map1)
+
+# Display the map (works in Jupyter or saves to file)
+my_map1
+```
+
+```{python}
+print("shape of hourly_df:", hourly_df.shape)
+
+```
+
 
 
 ### APPENDIX:
