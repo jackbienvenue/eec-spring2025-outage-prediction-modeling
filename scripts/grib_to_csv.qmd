@@ -28,16 +28,15 @@ ARGUMENTS:
 earliest_file - the EARLIEST chronological file (NAME only, no prefixes)
 latest_file - the LATEST chronological file (NAME only, no prefixes)
 input_directory - input directory which hosts the files (use relative path)
-large_csv_output_path - output path for new csv (name it at the end of the path)
 output_directory_path - output path for the NEW directory that is meant to store the new, grid-cell-specific CSVs
 
 NOTES:
 Dependencies: pandas, cfgrib, os
 """
 
-def grib_folder_processing(earliest_file, latest_file, input_directory, large_csv_output_path, output_directory_path):
+def grib_folder_processing(earliest_file, latest_file, input_directory, output_directory_path):
 
-    ## FUNCTION PHASE 1: TAKING GRIB FILES FROM FOLDER, CREATING ONE LARGE CSV WITH ALL GRID CELL CENTROIDS
+    ## FUNCTION PHASE 1: TAKING GRIB FILES FROM FOLDER, CREATING ONE LARGE DF WITH ALL GRID CELL CENTROIDS
 
     # Extract year and month from the earliest and latest file names
     earliest_year = int(earliest_file.split('_')[-2])  # Extract year from filename (second-to-last part)
@@ -104,10 +103,6 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
     # Sort the DataFrame chronologically
     combined_df.sort_index(inplace=True)
 
-    # Save the combined DataFrame to a CSV file
-    #####combined_df.to_csv(large_csv_output_path)                      # For now, this is commented out because we are now attempting to export just the little CSVs
-    #####print(f"Combined data saved to {large_csv_output_path}")
-
     #-----------------------------------------------------------------------------------
 
     ## FUNCTION PHASE 2: COLLAPSING NEW LARGE DF INTO MANY INIDIVUDAL GRID CELL CSVs
@@ -172,7 +167,7 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
             lon = group_df['longitude1'].iloc[0]  # Same as above for longitude
 
             lon = lon.round(5) # for consistency and brevity
-            
+
             # Rename columns:
             group_df = group_df.rename(columns={'latitude1': 'latitude', 'longitude1': 'longitude', 'valid_time': 'time'})
             
@@ -198,10 +193,10 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
 ```
 
-Let's try to execute this function:
+Below, you can execute the function by using your parameters of choice
 
 ```{python}
-#| echo: false
+#| echo: tre
 #| eval: true
 
 grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv", "../data/trial_directory_for_fxn/")
