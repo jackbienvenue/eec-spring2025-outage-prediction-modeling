@@ -196,9 +196,19 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
 Below, you can execute the function by using your parameters of choice
 
 ```{python}
-#| echo: tre
+#| echo: true
 #| eval: true
 
-grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv", "../data/trial_directory_for_fxn/")
+'''
+Remember:
+ARGUMENTS:
+earliest_file - the EARLIEST chronological file (NAME only, no prefixes)
+latest_file - the LATEST chronological file (NAME only, no prefixes)
+input_directory - input directory which hosts the files (use relative path)
+output_directory_path - output path for the NEW directory that is meant to store the new, grid-cell-specific CSVs
+'''
+
+# Function use:
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_2023_12.grib", "../data/data_CT/", "../data/individual_csvs/")
 
 ```
