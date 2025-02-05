@@ -112,9 +112,9 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
     #1. Isolate individual points throughout timeseries
 
         #1.a First, to save on storage space, let's drop some unnecessary columns. After inspection of the df,
-        # it looks as though columns "surface," "valid_time," "step", and "number" aren't actually providing us with useful information. We'll get rid of those here:
+        # it looks as though columns "surface,", "step", and "number" aren't actually providing us with useful information. We'll get rid of those here:
 
-    combined_df = combined_df.drop(columns=['number', 'step', 'surface', 'valid_time'])
+    df = combined_df.drop(columns=['number', 'step', 'surface'])
 
     #2. Sort individual points into their unique dataframes
 
@@ -124,18 +124,52 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
     #3. Go into each dataframe and make sure the information is sorted chronologically
 
+    for i, group_df in enumerate(grouped):
+
+    #3.a Convert 'valid_time' column to datetime
+        group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p')
     
+    #3.b Sort each df by 'time'
+        group_df = group_df.sort_values(by='valid_time')
 
     #4. Create new directory to store the new CSVs
 
+    #4.a Create nested function to make directory (if necessary, which in most cases should be) for CSV storage
+
+    def create_directory(output_directory_path):
+    
+        if not os.path.exists(output_directory_path):
+            os.makedirs(output_directory_path)
+
     #5. Export the CSVs into the new directory with appropriate names
 
-        #5.a. Form new directory using name given by the argument "output_directory_path"
+        #5.a. Create function to name files appropriately as they are being exported 
 
-        #5.b. Name files appropriately as they are being exported 
+    def export_dfs_to_csv(dfs, output_directory_path): #dfs is a list!
+        create_directory(output_directory_path)  # Ensure directory exists
 
-# Example usage:
-# grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/sample_output1.csv")
+            # Iterate through the list of DataFrames
+        for idx, group_df in enumerate(dfs):
+            # Define a naming convention based on latitude and longitude
+            # For example: "latitude_longitude_df_1.csv"
+            lat = group_df['latitude'].iloc[0]  # Get the first value (assuming all values are the same for each group)
+            lon = group_df['longitude'].iloc[0]  # Same as above for longitude
+            
+            # Create a filename using latitude, longitude, and an index
+            filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
+            
+            # Ensure it's a valid filename
+            filename = filename.replace('.', '_')  # Replace dots for better compatibility in filenames
+            
+            # Construct the full path for the CSV file
+            full_path = os.path.join(output_directory_path, filename)
+
+            # Export the DataFrame to CSV
+            group_df.to_csv(full_path, index=False)
+
+        #5.b. Wrap it up by using the functions to export!
+
+        export_dfs_to_csv(grouped, output_directory_path)
 ```
 
 Let's try to execute this function:
@@ -144,6 +178,6 @@ Let's try to execute this function:
 #| echo: false
 #| eval: true
 
-grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv")
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv", "../data/trial_directory_for_fxn")
 
 ```
