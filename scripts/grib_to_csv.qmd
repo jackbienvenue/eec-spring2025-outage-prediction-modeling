@@ -89,8 +89,8 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
     # Solving the multi-index issue to assign new columns:
     for i, df in enumerate(df_list):
         df = df.reset_index()  # Reset index to move latitude and longitude to columns
-        df['latitude1'] = df['latitude'].round(3)  # Create latitude1 column
-        df['longitude1'] = df['longitude']  # Create longitude1 column
+        df['latitude1'] = df['latitude'].round(5)  # Create latitude1 column
+        df['longitude1'] = df['longitude'].round(5)  # Create longitude1 column
         df.set_index(['time', 'latitude', 'longitude'], inplace=True)  # Set index back to MultiIndex
         
         # Reassign the modified DataFrame back to the list
@@ -127,8 +127,10 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
         #1.a First, to save on storage space, let's drop some unnecessary columns. After inspection of the df,
         # it looks as though columns "surface,", "step", and "number" aren't actually providing us with useful information. We'll get rid of those here:
+        # furthermore, for the purposes of our analysis, we 
 
     df = combined_df.drop(columns=['number', 'step', 'surface'])
+    df = df.drop(columns=['d2m', 'sp', 'lai_hv', 'lai_lv', 'sf']) # Drop extraneous columns
 
     #2. Sort individual points into their unique dataframes
 
@@ -168,6 +170,11 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
             # For example: "latitude_longitude_df_1.csv"
             lat = group_df['latitude1'].iloc[0]  # Get the first value (assuming all values are the same for each group)
             lon = group_df['longitude1'].iloc[0]  # Same as above for longitude
+
+            lon = lon.round(5) # for consistency and brevity
+            
+            # Rename columns:
+            group_df = group_df.rename(columns={'latitude1': 'latitude', 'longitude1': 'longitude', 'valid_time': 'time'})
             
             # Create a filename using latitude, longitude, and an index
             filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
@@ -178,7 +185,6 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
             # Join the filename back together
             filename = '.'.join(filename)
-
             
             # Construct the full path for the CSV file
             full_path = os.path.join(output_directory_path, filename)
