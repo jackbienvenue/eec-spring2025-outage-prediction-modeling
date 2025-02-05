@@ -57,7 +57,14 @@ nan_count = daily_df['t2m'].isna().sum()
 # Print count of NAs in column:
 
 print('Count of NaNs:', nan_count)
+
+# Total count of entries:
+
+print('Count of rows in hourly_df:', len(hourly_df))
+print('Count of rows in daily_df:', len(daily_df))
 ```
+
+220 grid cells * 24 hours is 5280. The source of the 6820 is opaque.
 
 Across the daily & hourly dfs and over the time series, there seems to always be a nan_count of 1550. Let's investigate this.
 
@@ -130,10 +137,7 @@ my_map1
 
 ```{python}
 print("shape of hourly_df:", hourly_df.shape)
-
 ```
-
-
 
 ### APPENDIX:
 
