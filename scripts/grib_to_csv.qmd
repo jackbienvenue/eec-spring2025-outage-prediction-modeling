@@ -56,19 +56,19 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
         file_path = os.path.join(input_directory, file_name)
 
         # Debug: Print the file path being checked
-        print(f"Checking file: {file_path}")
+        #####print(f"Checking file: {file_path}")
 
         # Check if the file exists and is a GRIB file (not an index file)
         if os.path.exists(file_path) and file_name.endswith(".grib"):
             try:
                 # Debug: Print a message before attempting to read the file
-                print(f"Attempting to read file: {file_name}")
+                #####print(f"Attempting to read file: {file_name}")
 
                 # Read the GRIB file and convert to DataFrame
                 hourly_data = cfgrib.open_dataset(file_path, backend_kwargs={'filter_by_keys': {'typeOfLevel': 'surface', 'step': 1}})
                 hourly_df = hourly_data.to_dataframe()
                 df_list.append(hourly_df)
-                print(f"Successfully processed file: {file_name}")
+                #####print(f"Successfully processed file: {file_name}")
             except Exception as e:
                 print(f"Error processing file {file_name}: {e}")
         else:
@@ -86,6 +86,8 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
     # Combine all DataFrames into one
     combined_df = pd.concat(df_list)
+
+    #####print("Combined_df columns:", combined_df.columns)
 
     # Sort the DataFrame chronologically
     combined_df.sort_index(inplace=True)
@@ -118,9 +120,21 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
     #2. Sort individual points into their unique dataframes
 
-        # Here, we'll use a group by clause to yield a list of dataframes, each corresponding to an individual point:
+        # Here, we'll use a group by clause to yield a list of dataframes, each corresponding to an individual point. This particular method preserves the lat/long combo as both the index for the new df and as accessible columns in the resulting dfs:
 
-    grouped = [group for _, group in df.groupby(['latitude', 'longitude'])]
+    print(df.columns)
+
+```
+
+```
+    grouped = [group.set_index(['latitude', 'longitude']).reset_index() for _, group in df.groupby(['latitude', 'longitude'])]
+
+
+    for i, group_df in enumerate(grouped):
+        print(group_df.columns)
+
+
+```
 
     #3. Go into each dataframe and make sure the information is sorted chronologically
 
@@ -137,7 +151,6 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
     #4.a Create nested function to make directory (if necessary, which in most cases should be) for CSV storage
 
     def create_directory(output_directory_path):
-    
         if not os.path.exists(output_directory_path):
             os.makedirs(output_directory_path)
 
@@ -169,7 +182,8 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
         #5.b. Wrap it up by using the functions to export!
 
-        export_dfs_to_csv(grouped, output_directory_path)
+    export_dfs_to_csv(grouped, output_directory_path)
+
 ```
 
 Let's try to execute this function:
@@ -178,6 +192,6 @@ Let's try to execute this function:
 #| echo: false
 #| eval: true
 
-grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv", "../data/trial_directory_for_fxn")
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/output1.csv", "../data/trial_directory_for_fxn/")
 
 ```
