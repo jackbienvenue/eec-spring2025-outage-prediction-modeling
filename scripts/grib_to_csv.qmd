@@ -84,8 +84,20 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
     if len(df_list) == 0:
         raise ValueError("No valid GRIB files were processed. Check the input directory and file names.")
 
+    # Since latitude and longitude are being used as a part of a multi-index with time, let's replicate the latitude and longitude columns so that they are still accessible after the concatenation
+
+    # Solving the multi-index issue to assign new columns:
+    for i, df in enumerate(df_list):
+        df = df.reset_index()  # Reset index to move latitude and longitude to columns
+        df['latitude1'] = df['latitude'].round(3)  # Create latitude1 column
+        df['longitude1'] = df['longitude']  # Create longitude1 column
+        df.set_index(['time', 'latitude', 'longitude'], inplace=True)  # Set index back to MultiIndex
+        
+        # Reassign the modified DataFrame back to the list
+        df_list[i] = df
+
     # Combine all DataFrames into one
-    combined_df = pd.concat(df_list)
+    combined_df = pd.concat(df_list, ignore_index=True)  ##### PROBLEM
 
     #####print("Combined_df columns:", combined_df.columns)
 
@@ -122,19 +134,8 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
 
         # Here, we'll use a group by clause to yield a list of dataframes, each corresponding to an individual point. This particular method preserves the lat/long combo as both the index for the new df and as accessible columns in the resulting dfs:
 
-    print(df.columns)
+    grouped = [group.set_index(['latitude1', 'longitude1']).reset_index() for _, group in df.groupby(['latitude1', 'longitude1'])]
 
-```
-
-```
-    grouped = [group.set_index(['latitude', 'longitude']).reset_index() for _, group in df.groupby(['latitude', 'longitude'])]
-
-
-    for i, group_df in enumerate(grouped):
-        print(group_df.columns)
-
-
-```
 
     #3. Go into each dataframe and make sure the information is sorted chronologically
 
@@ -165,14 +166,19 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, large_cs
         for idx, group_df in enumerate(dfs):
             # Define a naming convention based on latitude and longitude
             # For example: "latitude_longitude_df_1.csv"
-            lat = group_df['latitude'].iloc[0]  # Get the first value (assuming all values are the same for each group)
-            lon = group_df['longitude'].iloc[0]  # Same as above for longitude
+            lat = group_df['latitude1'].iloc[0]  # Get the first value (assuming all values are the same for each group)
+            lon = group_df['longitude1'].iloc[0]  # Same as above for longitude
             
             # Create a filename using latitude, longitude, and an index
             filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
-            
-            # Ensure it's a valid filename
-            filename = filename.replace('.', '_')  # Replace dots for better compatibility in filenames
+
+            # Replace dots in latitude and longitude with underscores
+            filename = filename.rsplit('.', 1)  # Split only on the last dot (the file extension)
+            filename[0] = filename[0].replace('.', '_')  # Replace dots in the main part of the filename
+
+            # Join the filename back together
+            filename = '.'.join(filename)
+
             
             # Construct the full path for the CSV file
             full_path = os.path.join(output_directory_path, filename)
