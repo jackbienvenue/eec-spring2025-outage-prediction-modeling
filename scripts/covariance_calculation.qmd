@@ -18,7 +18,7 @@ import os
 
 ```
 
-We must decide how to handle the wind speeds here. The wind speed is split into u & v components, and can be triangulated for the wind speed. It may also be useful to take the absolute value of u & v and compare them to each other. 
+We must decide how to handle the wind speeds here. The wind speed is split into u & v components, and can be triangulated for the wind speed. It may also be useful to take the absolute value of u & v and compare them to each other. We also need to determine whether autocovariance
 
 ``` {python}
 #| echo: false
@@ -28,7 +28,44 @@ def grid_cell_driver_interal_covariance_calculation()
 
     '''
     Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of 
+
+
+    Recall that our variables are:
+    
+    - tp - the total precipitation over time frame (what time frame?)
+        - UNIT: meters (depth in meters of water of precipitation)
+    - u10 - u (West-->East) component of wind speed (Eastward winds equate to positive values) recorded at surface height of 10m
+        - UNIT: m/s
+    - v10 - v (South-->North) componenet of wind speed (Northward winds equate to positive values) recorded at surface height of 10m
+        - UNIT: m/s
+    - t2m - Temperature recorded at surface height of 2m
+        - UNIT: K
+
+    We calculate 
     '''
+
+    ## COMBINATION 1 --- tp x tp --- autocovariance:
+
+    ## COMBINATION 2 --- tp x wind speed --- covariance:
+
+    ## COMBINATION 3 --- tp x u10 --- covariance:
+
+    ## COMBINATION 4 --- tp x v10 --- covariance:
+
+    ## COMBINATION 5 --- tp x t2m --- covariance:
+
+    ## COMBINATION 6 --- wind speed x wind speed --- autocovariance:
+
+    ## COMBINATION 7 --- wind speed x t2m --- covariance:
+
+    ## COMBINATION 8 --- u10 x t2m --- covariance:
+
+    ## COMBINATION 9 --- v10 x t2m --- covariance:
+
+    ## COMBINATION 10 --- t2m x t2m --- autocovariance:
+
+
+
 
 ```
 
