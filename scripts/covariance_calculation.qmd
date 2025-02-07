@@ -7,31 +7,60 @@ type: html
 
 ```{python}
 #| echo: false
-#| eval: false
+#| eval: true
 
 # Package Import
 
 import pandas as pd
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Data Import
+
+    # Example Data
+
+df = pd.read_csv("../data/individual_csvs_daily/lat_41_381_lon_-72_42732_time_series_weather.csv")
 
 ```
 
 We must decide how to handle the wind speeds here. The wind speed is split into u & v components, and can be triangulated for the wind speed. It may also be useful to take the absolute value of u & v and compare them to each other. We also need to determine whether autocovariance
 
+Before getting into the tricky function creation, let's start with a very basic view of a covariance matrix:
+
+``` {python}
+#| echo: false
+#| eval: true
+
+# Pick driver columns from df imported earleir
+selected_columns = df[['t2m', 'u10', 'v10', 'tp']]
+
+# Calculate the correlation matrix for the selected columns
+corr_matrix = selected_columns.corr()
+
+# Plot the heatmap for the correlation matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f', cbar=True, linewidths=0.5)
+
+# Set title
+plt.title('Correlation Matrix Heatmap', fontsize=16)
+plt.show()
+
+
+```
+
+
 ``` {python}
 #| echo: false
 #| eval: false
 
-def grid_cell_driver_interal_covariance_calculation()
+def grid_cell_driver_interal_covariance_calculation(target_repository)
 
     '''
-    Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of 
-
+    Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of drivers.
 
     Recall that our variables are:
-    
+
     - tp - the total precipitation over time frame (what time frame?)
         - UNIT: meters (depth in meters of water of precipitation)
     - u10 - u (West-->East) component of wind speed (Eastward winds equate to positive values) recorded at surface height of 10m
@@ -41,7 +70,12 @@ def grid_cell_driver_interal_covariance_calculation()
     - t2m - Temperature recorded at surface height of 2m
         - UNIT: K
 
-    We calculate 
+    We calculate the covariance by...
+
+    We calculate the autocovariance by... 
+
+    The function will output... 
+
     '''
 
     ## COMBINATION 1 --- tp x tp --- autocovariance:
@@ -80,3 +114,6 @@ def grid_cell_driver_external_covariance_calculation()
     '''
 
 ```
+
+
+IDEAS: How about a random selection to check covariance between a driver in one grid cell and another driver in another grid cell? What would the results of this mean?
