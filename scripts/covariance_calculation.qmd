@@ -1,0 +1,45 @@
+---
+title: Calculation of Covariance in Drivers
+author: Jack Bienvenue
+date: 7 February 2025
+type: html
+---
+
+```{python}
+#| echo: false
+#| eval: false
+
+# Package Import
+
+import pandas as pd
+import os
+
+# Data Import
+
+```
+
+We must decide how to handle the wind speeds here. The wind speed is split into u & v components, and can be triangulated for the wind speed. It may also be useful to take the absolute value of u & v and compare them to each other. 
+
+``` {python}
+#| echo: false
+#| eval: false
+
+def grid_cell_driver_interal_covariance_calculation()
+
+    '''
+    Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of 
+    '''
+
+```
+
+``` {python}
+#| echo: false
+#| eval: false
+
+def grid_cell_driver_external_covariance_calculation()
+
+    '''
+    Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with
+    '''
+
+```
