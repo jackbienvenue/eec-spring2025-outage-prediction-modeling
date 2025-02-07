@@ -1,0 +1,22 @@
+---
+title: Graphical Representation of Time Series in Weather Data
+author: Jack Bienvenue
+date: 7 February 2025
+type: html
+---
+
+In this file, we will make some codes to visualize the time series data we gathered from converting the *.grib* files into individual grid cell 
+
+``` {python}
+#| echo: false
+#| eval: true
+
+# Package Import
+import pandas as pd
+
+# Data Import
+df = pd.read_csv("../data/individual_csvs_daily/lat_41_281_lon_-73_62795_time_series_weather.csv")
+    ##### Example CSV to be observed
+```
+
+IDEA: Animated map of grid cells, time series of variables
