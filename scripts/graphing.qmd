@@ -32,11 +32,30 @@ Let's go ahead and begin working on plots. The first one can be of the temperatu
 df['time'] = pd.to_datetime(df['time'])
 
 # Create the interactive plot
-fig = px.line(df, x='time', y='t2m', title='Temperature at 2 Meter Elevation over Time')
+fig = px.line(df, x='time', y='t2m', title='Temperature at 2 Meter Elevation vs. Time')
 
 # Show the interactive plot
 fig.show()
 
 ```
+
+Let's continue and plot the total precipitation:
+
+``` {python}
+#| echo: false
+#| eval: true
+
+# Ensure 'time' column is in datetime format
+df['time'] = pd.to_datetime(df['time'])
+
+# Create the interactive plot
+fig1 = px.line(df, x='time', y='tp', title='Total Precipitation vs. Time')
+
+# Show the interactive plot
+fig1.show()
+
+```
+
+
 
 IDEA: Animated map of grid cells, time series of variables
