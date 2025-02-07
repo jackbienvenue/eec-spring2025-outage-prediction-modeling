@@ -15,24 +15,25 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Data Import
 
     # Example Data
 
-df = pd.read_csv("../data/individual_csvs_daily/lat_41_381_lon_-72_42732_time_series_weather.csv")
+df = pd.read_csv("../data/individual_csvs_daily/lat_41_481_lon_-73_42784_time_series_weather.csv")
 
 ```
 
 We must decide how to handle the wind speeds here. The wind speed is split into u & v components, and can be triangulated for the wind speed. It may also be useful to take the absolute value of u & v and compare them to each other. We also need to determine whether autocovariance
 
-Before getting into the tricky function creation, let's start with a very basic view of a covariance matrix:
+Before getting into the tricky function creation, let's start with a very basic view of a correlation matrix (we will use correlation in order to standarize the results):
 
 ``` {python}
 #| echo: false
 #| eval: true
 
-# Pick driver columns from df imported earleir
+# Pick driver columns from df imported earlier
 selected_columns = df[['t2m', 'u10', 'v10', 'tp']]
 
 # Calculate the correlation matrix for the selected columns
@@ -45,19 +46,16 @@ sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt='.2f', cbar=True, line
 # Set title
 plt.title('Correlation Matrix Heatmap', fontsize=16)
 plt.show()
-
-
 ```
-
 
 ``` {python}
 #| echo: false
 #| eval: false
 
-def grid_cell_driver_interal_covariance_calculation(target_repository)
+def grid_cell_driver_interal_correlation_calculation(target_directory)
 
     '''
-    Here, we are going to build out a function that allows us to take an input repository of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of drivers.
+    Here, we are going to build out a function that allows us to take an input directory of individual time series CSV files for data points and determine the covariance of drivers with respect to all possible pairs of drivers.
 
     Recall that our variables are:
 
@@ -78,28 +76,34 @@ def grid_cell_driver_interal_covariance_calculation(target_repository)
 
     '''
 
+    correlation_results = {}
+
+    for filename in os.listdir(target_directory):
+
+        if filename.endswith(".csv"):
+
+            df = pd.read_csv(filename)
+
+    # Part 1: Triangulating wind into wind speed
+
+            df['wind_speed'] = np.sqrt(df['u10']^2 + df['v10'])
+
+    # Part 2: Calculating and storing information for:
+
+            
+
     ## COMBINATION 1 --- tp x tp --- autocovariance:
-
     ## COMBINATION 2 --- tp x wind speed --- covariance:
-
     ## COMBINATION 3 --- tp x u10 --- covariance:
-
     ## COMBINATION 4 --- tp x v10 --- covariance:
-
     ## COMBINATION 5 --- tp x t2m --- covariance:
-
     ## COMBINATION 6 --- wind speed x wind speed --- autocovariance:
-
     ## COMBINATION 7 --- wind speed x t2m --- covariance:
-
     ## COMBINATION 8 --- u10 x t2m --- covariance:
-
     ## COMBINATION 9 --- v10 x t2m --- covariance:
-
     ## COMBINATION 10 --- t2m x t2m --- autocovariance:
 
-
-
+    return 
 
 ```
 
@@ -116,4 +120,8 @@ def grid_cell_driver_external_covariance_calculation()
 ```
 
 
-IDEAS: How about a random selection to check covariance between a driver in one grid cell and another driver in another grid cell? What would the results of this mean?
+IDEAS: 
+
+- How about a random selection to check covariance between a driver in one grid cell and another driver in another grid cell? What would the results of this mean?
+
+- Scatterplots leading into regression analysis of pairs of drivers in order to assess linearity/non-linearity (ML training and testing?)
