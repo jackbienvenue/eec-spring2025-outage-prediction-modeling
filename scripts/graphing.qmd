@@ -25,6 +25,8 @@ df = pd.read_csv("../data/individual_csvs_daily/lat_41_281_lon_-73_62795_time_se
 Let's go ahead and begin working on plots. The first one can be of the temperature over time. We can do this in the following way:
 
 ``` {python}
+#| echo: false
+#| eval: true
 
 # Ensure 'time' column is in datetime format
 df['time'] = pd.to_datetime(df['time'])
