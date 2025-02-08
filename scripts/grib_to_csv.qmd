@@ -199,6 +199,15 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
 
             # Rename columns:
             group_df = group_df.rename(columns={'latitude1': 'latitude', 'longitude1': 'longitude', 'valid_time': 'time'})
+
+            group_df.dropna
+
+            for i, group_df in enumerate(grouped):
+                # Convert 'valid_time' column to datetime with error handling
+                group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+                    
+            # Sort each df by 'valid_time'
+            group_df = group_df.sort_values(by='valid_time')
             
             # Create a filename using latitude, longitude, and an index
             filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
@@ -243,6 +252,6 @@ grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5
 
 ```
 
-NOTE: THIS FILE EXPORTS GRIB FILES AT A DAILY SCALE. THE ORIGINAL GRIB FILES SUPPORT AN HOURLY RESOLUTION, AND NOTE THE FOLLOWING STRUCTURAL COMPONENTS:
+NOTE: THE ORIGINAL GRIB FILES SUPPORT AN HOURLY RESOLUTION, AND NOTE THE FOLLOWING STRUCTURAL COMPONENTS:
 1. The Grib files begin with an empty day (24 hours) which corresponds to the final day of the previous month
 2. The Grib files end with an empty hour (midnight of the first day of the next month)
