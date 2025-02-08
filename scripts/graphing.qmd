@@ -16,6 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import seaborn as sns
+import numpy as np
 
 # Data Import
 df = pd.read_csv("../data/individual_csvs_daily/lat_41_281_lon_-73_62795_time_series_weather.csv")
@@ -56,6 +57,20 @@ fig1.show()
 
 ```
 
+Let's calculate wind speed and view it:
 
+``` {python}
+#| echo: false
+#| eval: true
+
+# Add Wind Speed variable by triangularizing
+df['wind_speed'] = np.sqrt(df['u10']**2 + df['v10']**2)
+
+fig2 = px.line(df, x='time', y='wind_speed', title='Triangularized Wind Speed vs. Time')
+
+fig2.show()
+```
 
 IDEA: Animated map of grid cells, time series of variables
+
+- Do strong winds that blow in different directions than what is usual lead to more power outages (vegetation may grow to become strong to certain forces, but not others)

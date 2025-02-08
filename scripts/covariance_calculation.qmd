@@ -86,11 +86,11 @@ def grid_cell_driver_interal_correlation_calculation(target_directory)
 
     # Part 1: Triangulating wind into wind speed
 
-            df['wind_speed'] = np.sqrt(df['u10']^2 + df['v10'])
+            df['wind_speed'] = np.sqrt(df['u10']**2 + df['v10']**2)
 
     # Part 2: Calculating and storing information for:
 
-            
+
 
     ## COMBINATION 1 --- tp x tp --- autocovariance:
     ## COMBINATION 2 --- tp x wind speed --- covariance:
