@@ -64,18 +64,36 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
                 # Debug: Print a message before attempting to read the file
                 #####print(f"Attempting to read file: {file_name}")
 
-                # Read the GRIB file and convert to DataFrame
-                hourly_data = cfgrib.open_dataset(
-                    file_path,
-                    backend_kwargs={
-                        'filter_by_keys': {
-                            'typeOfLevel': 'surface',
-                            'step': 1  # 1 hour step size
+                if not hourly: # Handles daily case
+
+                    # Read the GRIB file and convert to DataFrame
+                    hourly_data = cfgrib.open_dataset(
+                        file_path,
+                        backend_kwargs={
+                            'filter_by_keys': {
+                                'typeOfLevel': 'surface',
+                                'step': 1  # 1 hour step size
+                            }
                         }
-                    }
-                ) # Attempt to resolve issue with steps
-                hourly_df = hourly_data.to_dataframe()
-                df_list.append(hourly_df)
+                    ) # Attempt to resolve issue with steps
+                    hourly_df = hourly_data.to_dataframe()
+                    df_list.append(hourly_df)
+
+                else:
+                    for step in range(24):
+                        hourly_data = cfgrib.open_dataset(
+                            file_path,
+                            backend_kwargs={
+                                'filter_by_keys': {
+                                    'typeOfLevel': 'surface',
+                                    'step': step  # Step corresponding to each hour (0 to 23)
+                                }
+                            }
+                        )
+                        hourly_df = hourly_data.to_dataframe()
+
+                        df_list.append(hourly_df)
+    
                 #####print(f"Successfully processed file: {file_name}")
             except Exception as e:
                 print(f"Error processing file {file_name}: {e}")
@@ -129,12 +147,13 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
 
     #1. Isolate individual points throughout timeseries
 
-        #1.a First, to save on storage space, let's drop some unnecessary columns. After inspection of the df,
-        # it looks as though columns "surface,", "step", and "number" aren't actually providing us with useful information. We'll get rid of those here:
-        # furthermore, for the purposes of our analysis, we 
+        #1.a Let's subset our variables so we only take the ones we want:
 
-    df = combined_df.drop(columns=['number', 'step', 'surface'])
-    df = df.drop(columns=['d2m', 'sp', 'lai_hv', 'lai_lv', 'sf']) # Drop extraneous columns
+    # List of variables you want to keep
+    keep_variables = ['t2m', 'tp', 'u10', 'v10', 'latitude1', 'longitude1', 'valid_time'] #'time', 'latitude', 'longitude', 'step'
+
+    # Select the desired columns
+    df = combined_df[keep_variables] # Subset to drop extraneous columns
 
     #2. Sort individual points into their unique dataframes
 
@@ -146,12 +165,13 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
     #3. Go into each dataframe and make sure the information is sorted chronologically
 
     for i, group_df in enumerate(grouped):
+        # Convert 'valid_time' column to datetime with error handling
+        group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
+        
+    # Sort each df by 'valid_time'
+    group_df = group_df.sort_values(by='valid_time')
 
-    #3.a Convert 'valid_time' column to datetime
-        group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p')
-    
-    #3.b Sort each df by 'time'
-        group_df = group_df.sort_values(by='valid_time')
+    group_df = group_df.dropna
 
     #4. Create new directory to store the new CSVs
 
@@ -219,7 +239,7 @@ output_directory_path - output path for the NEW directory that is meant to store
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/sample_hourly_csvs/")
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/sample_hourly_csvs/", hourly=True)
 
 ```
 
