@@ -212,3 +212,7 @@ output_directory_path - output path for the NEW directory that is meant to store
 grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_2023_12.grib", "../data/data_CT/", "../data/individual_csvs/")
 
 ```
+
+NOTE: THIS FILE EXPORTS GRIB FILES AT A DAILY SCALE. THE ORIGINAL GRIB FILES SUPPORT AN HOURLY RESOLUTION, AND NOTE THE FOLLOWING STRUCTURAL COMPONENTS:
+1. The Grib files begin with an empty day (24 hours) which corresponds to the final day of the previous month
+2. The Grib files end with an empty hour (midnight of the first day of the next month)
