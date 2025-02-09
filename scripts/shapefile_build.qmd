@@ -1,0 +1,87 @@
+---
+title: Building Grid Cell Shapefiles
+author: Jack Bienvenue
+date: 8 February 2025
+format: html
+---
+
+For the weather analysis, the state of Connecticut is divided into a number of grid cells. These are rectangles with edges as longitude and latitude lines. The grid cells set the resolution for the analysis. Since we are missing the shapefile of the grid cells, we will compute them and create them from the centers which we can obtain from our GRIB files.
+
+``` {python}
+#| echo: false
+#| eval: true
+
+import geopandas as gpd
+import pandas as pd
+from shapely.geometry import Point, Polygon
+from geopy.distance import geodesic
+import numpy as np
+import matplotlib.pyplot as plt
+import xarray as xr
+import cfgrib
+import folium
+
+# Initializing:
+
+    # Set file path:
+file_path = "../data/data_CT/download_ERA5_LAND_package_1979_01.grib"
+
+hourly_data = cfgrib.open_dataset(
+                        file_path,
+                        backend_kwargs={
+                            'filter_by_keys': {
+                                'typeOfLevel': 'surface',
+                                'step': 1  # 1 hour step size
+                            }
+                        }
+                    ) # Attempt to resolve issue with steps
+
+df = hourly_data.to_dataframe()
+
+df = df.reset_index()
+
+data = df[['latitude', 'longitude']].drop_duplicates()
+
+data = data.rename(columns={'latitude': 'lat', 'longitude': 'lon'})
+
+
+# Step 1: Convert lat, lon to Points and store in GeoDataFrame
+geometry = [Point(lon, lat) for lon, lat in zip(data['lon'], data['lat'])]
+gdf = gpd.GeoDataFrame(data, geometry=geometry, crs="EPSG:4326")
+
+# Step 2: Define the grid size (distance between centers of adjacent cells)
+grid_size = 0.1  # This defines the spacing between neighboring grid cells
+
+# Step 3: Create grid cells
+grid_cells = []
+
+# Define a function to create a grid cell based on neighbors
+def create_grid_cell(center_point, size):
+    lat, lon = center_point.y, center_point.x
+    # Create a square grid around the center point
+    min_lon = lon - size / 2
+    max_lon = lon + size / 2
+    min_lat = lat - size / 2
+    max_lat = lat + size / 2
+    return Polygon([(min_lon, min_lat), (max_lon, min_lat), 
+                    (max_lon, max_lat), (min_lon, max_lat)])
+
+# Step 4: Iterate through the points and create grid cells
+for idx, row in gdf.iterrows():
+    point = row['geometry']
+    grid_cell = create_grid_cell(point, grid_size)
+    grid_cells.append(grid_cell)
+
+# Step 5: Create a GeoDataFrame for the grid cells and save as shapefile
+gdf_grid_cells = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:26986")
+        ## Coordinate Reference System set to Universal Transverse Mercator for CT
+
+# Step 6: Visualize the grid cells on a map using Folium
+m = folium.Map(location=[gdf_grid_cells.geometry.centroid.y.mean(), gdf_grid_cells.geometry.centroid.x.mean()],
+               zoom_start=12, control_scale=True)
+folium.GeoJson(gdf_grid_cells).add_to(m)
+m
+
+# Save grid cells to shapefile
+gdf_grid_cells.to_file("../data/grid_cell_shapefile/grid_cells.shp")
+```
