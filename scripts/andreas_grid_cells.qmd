@@ -1,0 +1,66 @@
+---
+author: Jack Bienvenue
+title: Building Grid Cells - Andreas's Code
+format: html
+---
+
+Here, I take Andreas's code and extend it slightly for the purposes of this analysis. 
+
+```{python}
+import xarray as xr
+import numpy as np
+import geopandas as gpd
+import shapely
+import folium
+
+# Get the coordinates from the dataset, explicitly using cfgrib engine
+era5_dataset = xr.open_dataset('../data/data_CT/download_ERA5_LAND_package_2023_01.grib', engine='cfgrib', backend_kwargs={
+                            'filter_by_keys': {
+                                'typeOfLevel': 'surface',
+                                'step': 1  # 1 hour step size
+                            }
+                        })
+
+longitudes = era5_dataset['longitude'].values
+latitudes = era5_dataset['latitude'].values
+
+# Create a mesh
+longitudes, latitudes = np.meshgrid(longitudes, latitudes)
+era5_col, era5_row = np.meshgrid(range(longitudes.shape[1]), range(longitudes.shape[0]))
+
+# Create the registry
+era5_grid_registry = gpd.GeoDataFrame(shapely.points(longitudes.ravel(), latitudes.ravel()), columns = ['geometry'], geometry = 'geometry', crs = 'epsg:4326')
+era5_grid_registry['row'] = era5_row.ravel()
+era5_grid_registry['col'] = era5_col.ravel()
+
+# Export as a shapefile
+era5_grid_registry.to_file("../data/grid_cell_shapefile/andreas_jack_code_shapefile/era5_grid_registry.shp")
+
+# Create a folium map centered on the average latitude and longitude
+map_center = [latitudes.mean(), longitudes.mean()]
+m = folium.Map(location=map_center, zoom_start=4)
+
+# Add grid cells as polygons to the map
+for i in range(longitudes.shape[0] - 1):  # Iterate over rows (longitudes)
+    for j in range(longitudes.shape[1] - 1):  # Iterate over columns (latitudes)
+        # Define the corners of the grid cell (longitude, latitude)
+        latitudes_corners = [latitudes[i, j], latitudes[i, j + 1], latitudes[i + 1, j + 1], latitudes[i + 1, j]]
+        longitudes_corners = [longitudes[i, j], longitudes[i, j + 1], longitudes[i + 1, j + 1], longitudes[i + 1, j]]
+        
+        # Create the polygon (list of coordinates)
+        polygon = list(zip(latitudes_corners, longitudes_corners))
+        
+        # Add the polygon to the map
+        folium.Polygon(
+            locations=polygon,
+            color='blue',
+            fill=True,
+            fill_color='blue',
+            fill_opacity=0.3
+        ).add_to(m)
+
+# Save the map as an HTML file
+m.save("../data/grid_cell_shapefile/andreas_jack_code_shapefile/era5_grid_registry_map.html")
+
+m
+```
