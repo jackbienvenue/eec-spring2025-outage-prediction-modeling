@@ -34,11 +34,19 @@ grid_cells = []
 # Iterate over grid cells and create polygons
 for i in range(longitudes.shape[0] - 1):  # Iterate over rows (latitudes)
     for j in range(longitudes.shape[1] - 1):  # Iterate over columns (longitudes)
-        # Define the corners of the grid cell (longitude, latitude)
-        latitudes_corners = [latitudes[i, j], latitudes[i, j + 1], latitudes[i + 1, j + 1], latitudes[i + 1, j]]
-        longitudes_corners = [longitudes[i, j], longitudes[i, j + 1], longitudes[i + 1, j + 1], longitudes[i + 1, j]]
+        # Latitude and longitude of the center (point)
+        center_lat = latitudes[i, j]
+        center_lon = longitudes[i, j]
+
+        # Calculate the distance (half-step) to the neighbors
+        half_step_lat = (latitudes[i + 1, j] - latitudes[i, j]) / 2
+        half_step_lon = (longitudes[i, j + 1] - longitudes[i, j]) / 2
+
+        # Calculate the coordinates of the corners using the half-step distance
+        latitudes_corners = [center_lat - half_step_lat, center_lat - half_step_lat, center_lat + half_step_lat, center_lat + half_step_lat]
+        longitudes_corners = [center_lon - half_step_lon, center_lon + half_step_lon, center_lon + half_step_lon, center_lon - half_step_lon]
         
-        # Create the polygon (list of coordinates)
+        # Create the polygon using these corner coordinates
         polygon = Polygon(zip(longitudes_corners, latitudes_corners))
         
         # Append the polygon to the list of grid cells
@@ -72,5 +80,6 @@ for polygon in grid_cells:
 m.save("../data/grid_cell_shapefile/andreas_jack_code_shapefile/era5_grid_registry_map.html")
 
 m
+
 ```
 
