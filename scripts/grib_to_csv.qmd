@@ -80,7 +80,7 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
                     df_list.append(hourly_df)
 
                 else:
-                    for step in range(24):
+                    for step in range(25):
                         hourly_data = cfgrib.open_dataset(
                             file_path,
                             backend_kwargs={
@@ -247,7 +247,7 @@ output_directory_path - output path for the NEW directory that is meant to store
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1980_11.grib", "../data/sample_data/", "../data/sample_hourly_csvs/", hourly=True)
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1979_02.grib", "../data/sample_data/", "../data/sample_hourly_csvs/", hourly=True)
 
 ```
 
