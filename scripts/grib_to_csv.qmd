@@ -200,15 +200,13 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
             # Rename columns:
             group_df = group_df.rename(columns={'latitude1': 'latitude', 'longitude1': 'longitude', 'valid_time': 'time'})
 
-            group_df.dropna
-
             for i, group_df in enumerate(grouped):
                 # Convert 'valid_time' column to datetime with error handling
                 group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p', errors='coerce')
                     
             # Sort each df by 'valid_time'
             group_df = group_df.sort_values(by='valid_time')
-            
+
             # Create a filename using latitude, longitude, and an index
             filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
 
@@ -223,6 +221,7 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
             full_path = os.path.join(output_directory_path, filename)
 
             # Export the DataFrame to CSV
+            group_df = group_df.dropna()
             group_df.to_csv(full_path, index=False)
 
         #5.b. Wrap it up by using the functions to export!
