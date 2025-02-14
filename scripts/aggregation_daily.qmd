@@ -56,7 +56,7 @@ def daily_aggregator(input_directory, output_path):
 
     for df in df_list:
         # Read in 'time' column as datetime to begin aggregating
-        df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S')
+        df['time'] = pd.to_datetime(df['time'])
 
         # Access date by extracting it 
         df['date'] = df['time'].dt.date
