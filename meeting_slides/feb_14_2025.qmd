@@ -1,0 +1,58 @@
+---
+title: "EEC Advising Meeting"
+subtitle: "Jack Bienvenue, Dr. Stergios Emmanouil, Dr. Manos Anagnostou"
+date: "February 14, 2025"
+format: revealjs
+revealjs-theme: "simple" 
+revealjs-transition: "fade" 
+highlight-style: "github"  
+slide-number: true 
+---
+
+## Organization
+
+Materials for the internship are hosted on Github:
+
+- [https://github.com/jackbienvenue/weather-driver-independence-evaluation](https://github.com/jackbienvenue/weather-driver-independence-evaluation)
+- Scripts are publicly available, feel free to share
+
+## Progress
+
+- Developed function to automatically process desired subsets of *.GRIB* into grid-cell specific CSVs
+
+``` {python}
+#| echo: true
+#| eval: false
+
+grib_folder_processing(earliest_file, latest_file, 
+    input_directory, output_directory_path, hourly=False)
+
+'''
+earliest_file - the EARLIEST chronological file
+
+latest_file - the LATEST chronological file
+
+input_directory - input directory which hosts the files
+
+output_directory_path - output path for the NEW directory that 
+    is meant to store the new, grid-cell-specific CSVs
+
+hourly - whether or not to export data at an hourly resolution
+'''
+```
+
+## Progress, continued
+
+- Created aggregation functions 
+- Learned to make animated map of weather 
+
+
+## Plans
+
+- Process larger subsets of hourly data into 
+- Make 
+
+## Questions
+
+- Which aggregations are the most useful for drivers over a daily period?
+- Are there particular visualizations useful to the project for reporting?
