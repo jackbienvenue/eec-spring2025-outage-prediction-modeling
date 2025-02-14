@@ -51,6 +51,7 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
     # Loop through years and months
     current_year, current_month = earliest_year, earliest_month
     while (current_year < latest_year) or (current_year == latest_year and current_month <= latest_month):
+
         # Construct the file name for the current year and month
         file_name = f"download_ERA5_LAND_package_{current_year}_{current_month:02d}.grib"
         file_path = os.path.join(input_directory, file_name)
@@ -60,25 +61,48 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
 
         # Check if the file exists and is a GRIB file (not an index file)
         if os.path.exists(file_path) and file_name.endswith(".grib"):
-            try:
-                # Debug: Print a message before attempting to read the file
-                #####print(f"Attempting to read file: {file_name}")
 
-                # Read the GRIB file and convert to DataFrame
-                hourly_data = cfgrib.open_dataset(
-                    file_path,
-                    backend_kwargs={
-                        'filter_by_keys': {
-                            'typeOfLevel': 'surface',
-                            'step': 1  # 1 hour step size
+            if not hourly:
+                try:
+                    # Debug: Print a message before attempting to read the file
+                    #####print(f"Attempting to read file: {file_name}")
+
+                    # Read the GRIB file and convert to DataFrame
+                    data = cfgrib.open_dataset(
+                        file_path,
+                        backend_kwargs={
+                            'filter_by_keys': {
+                                'typeOfLevel': 'surface',
+                                'step': 1  # 1 hour step size
+                            }
                         }
-                    }
-                ) # Attempt to resolve issue with steps
-                hourly_df = hourly_data.to_dataframe()
-                df_list.append(hourly_df)
-                #####print(f"Successfully processed file: {file_name}")
-            except Exception as e:
-                print(f"Error processing file {file_name}: {e}")
+                    ) # Attempt to resolve issue with steps
+
+                    
+                    df = data.to_dataframe()
+                    df_list.append(df)
+                    #####print(f"Successfully processed file: {file_name}")
+
+                except Exception as e:
+                    print(f"Error processing file {file_name}: {e}")
+
+            elif hourly:
+                for step in range(1, 25):
+
+                    # Read the GRIB file and convert to DataFrame
+                    hourly_data = cfgrib.open_dataset(
+                            file_path,
+                            backend_kwargs={
+                                'filter_by_keys': {
+                                    'typeOfLevel': 'surface',
+                                    'step': step  # variable time of day
+                                }
+                            }
+                    ) # Attempt to resolve issue with steps
+                    hourly_df = hourly_data.to_dataframe()
+
+                    df_list.append(hourly_df)
+
         else:
             print(f"File {file_name} not found in directory or is not a valid GRIB file.")
 
@@ -96,18 +120,24 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
 
     # Solving the multi-index issue to assign new columns:
     for i, df in enumerate(df_list):
-        df = df.reset_index()  # Reset index to move latitude and longitude to columns
-        df['latitude1'] = df['latitude'].round(5)  # Create latitude1 column
-        df['longitude1'] = df['longitude'].round(5)  # Create longitude1 column
-        df.set_index(['time', 'latitude', 'longitude'], inplace=True)  # Set index back to MultiIndex
-        
+
+        # Reset index to move latitude and longitude to columns
+        df = df.reset_index()
+
+        # Create latitude1 and longitude1 columns
+        df['latitude1'] = df['latitude'].round(5)
+        df['longitude1'] = df['longitude'].round(5)
+
+        # Set index back to MultiIndex with time, latitude, and longitude
+        df.set_index(['time', 'latitude', 'longitude'], inplace=True)
+
         # Reassign the modified DataFrame back to the list
         df_list[i] = df
 
     # Combine all DataFrames into one
-    combined_df = pd.concat(df_list, ignore_index=True)  ##### PROBLEM
+    combined_df = pd.concat(df_list, ignore_index=True)  
 
-    #####print("Combined_df columns:", combined_df.columns)
+    print(combined_df.columns)
 
     # Sort the DataFrame chronologically
     combined_df.sort_index(inplace=True)
@@ -148,7 +178,7 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
     for i, group_df in enumerate(grouped):
 
     #3.a Convert 'valid_time' column to datetime
-        group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M:%S %p')
+        group_df['valid_time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M')
     
     #3.b Sort each df by 'time'
         group_df = group_df.sort_values(by='valid_time')
@@ -193,6 +223,11 @@ def grib_folder_processing(earliest_file, latest_file, input_directory, output_d
             # Construct the full path for the CSV file
             full_path = os.path.join(output_directory_path, filename)
 
+            # Compensate for error:
+
+            if hourly:
+                group_df = group_df.sort_values(by='time')
+
             # Export the DataFrame to CSV
             group_df.to_csv(full_path, index=False)
 
@@ -219,7 +254,7 @@ output_directory_path - output path for the NEW directory that is meant to store
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_2023_01.grib", "download_ERA5_LAND_package_2023_01.grib", "../data/data_CT/", "../data/fix_hourly_replicate_issue/")
+grib_folder_processing("download_ERA5_LAND_package_2023_01.grib", "download_ERA5_LAND_package_2023_01.grib", "../data/data_CT/", "../data/fix_hourly_replicate_issue/", hourly = True)
 
 ```
 
