@@ -44,17 +44,23 @@ hourly - whether or not to export data at an hourly resolution
 ## Progress, continued
 
 - Created aggregation functions 
-- Learned to make animated map of weather 
+- Learned to make animated map of variables for grid cells over time
+    - Potentially useful for observing seasonal variations in the covariance of drivers
+- Created script to build grid cells
+- Started script for covariance calculations
 
 
-## Plans
+## Near-term Plans
 
-- Process larger subsets of hourly data into 
-- Make 
+- Process larger subsets of *.GRIB* files
+    - *.GRIB* --> hourly CSV --> Aggregated CSV
+- Calculate covariance of drivers for each grid cells
+- Observe distribution of each type covariance over all grid cells
+- Visualize each covariance relationship over grid cells
 
 ## Questions
 
 - Which aggregations are the most useful for drivers over a daily period?
     - Wind speed: average, max, average of top quantile?
 - Are there particular visualizations I can make which can be useful to the project for reporting?
-- 
+- Refresh on project details & objectives
