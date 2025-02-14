@@ -21,7 +21,8 @@ import numpy as np
 
     # Example Data
 
-df = pd.read_csv("../data/individual_csvs_daily/lat_41_481_lon_-73_42784_time_series_weather.csv")
+df = pd.read_csv("/Volumes/JB_Fortress_L3/hourly_resolution_csvs/lat_41_881_lon_-73_42784_time_series_weather.csv")
+
 
 ```
 
