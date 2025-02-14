@@ -31,6 +31,8 @@ input_directory - input directory which houses the target files (enter as relati
 
 output_path - output path for the NEW directory that 
     is meant to store the new, aggregated CSVs (enter as path)
+
+NOTE: THIS FUNCTION WILL ONLY RETURN USEFUL AGGREGATIONS WHEN GIVEN DATA WITH HOURLY GRANULARITY AS AN INPUT.
 '''
 
 def daily_aggregator(input_directory, output_path):
@@ -54,7 +56,7 @@ def daily_aggregator(input_directory, output_path):
 
     for df in df_list:
         # Read in 'time' column as datetime to begin aggregating
-        df['time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M')
+        df['time'] = pd.to_datetime(df['time'], format='%Y-%m-%d %H:%M:%S')
 
         # Access date by extracting it 
         df['date'] = df['time'].dt.date
@@ -76,6 +78,48 @@ def daily_aggregator(input_directory, output_path):
             avg_wind_speed=('wind_speed', 'max')
             ).reset_index()
 
-        print(daily_aggregated_df)
+#-----------------------------------------------------------
+# EXPORT FILES
 
+    def create_directory(output_path):
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+    def export_dfs_to_csv(dfs, output_path): 
+        create_directory(output_path) # Ensure directory exists
+
+            # Iterate through the list of DataFrames
+        for idx, df in enumerate(dfs):
+
+            lat = df['latitude'].iloc[0]
+            lon = df['longitude'].iloc[0]
+            lon = lon.round(5) # for consistency and brevity
+
+            # Create a filename using latitude, longitude, and an index
+            filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
+
+            # Replace dots in latitude and longitude with underscores
+            filename = filename.rsplit('.', 1)  # Split only on the last dot (the file extension)
+            filename[0] = filename[0].replace('.', '_')  # Replace dots in the main part of the filename
+
+            # Join the filename back together
+            filename = '.'.join(filename)
+            
+            # Construct the full path for the CSV file
+            full_path = os.path.join(output_path, filename)
+
+            # Compensate for error:
+            df = df.sort_values(by='time')
+
+            # Export the DataFrame to CSV
+            df.to_csv(full_path, index=False)
+
+    export_dfs_to_csv(df_list, output_path)
+
+```
+
+Let's try the function:
+
+``` {python}
+daily_aggregator('../data/fix_hourly_replicate_issue/', '../data/aggregation_trial/')
 ```
