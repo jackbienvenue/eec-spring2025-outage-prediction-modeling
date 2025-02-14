@@ -1,0 +1,65 @@
+---
+title: Aggregating Hourly Driver Data over Daily Increments
+format: html
+author: Jack Bienvenue
+Date: "February 14, 2025"
+---
+
+Now, we have conquered the tricky parts of importing grib files and processing them into individual CSVs, including at an hourly resolution.
+
+Let's continue onward by taking advantage of the newly cleaned data by aggregating relevant variables over individual days.
+
+We will seek the following information:
+
+- Total precipitation over day
+- Average wind speed over day
+- High temperature
+- Low temperature
+
+``` {python}
+
+# Package import
+import pandas as pd
+import os
+
+''' 
+Let's define a function to perform the aggregation:
+
+ARGUMENTS:
+
+input_directory - input directory which houses the target files (enter as relative path)
+
+output_path - output path for the NEW directory that 
+    is meant to store the new, aggregated CSVs (enter as path)
+'''
+
+def daily_aggregator(input_directory, output_path):
+
+    # Initialize empty list to store DataFrames
+    df_list = []
+
+    # Iterate through all files in the input directory:
+    files = os.listdir(input_directory)
+
+    # Pick out the CSV files exclusively
+    csv_files = [file for file in files if file.endswith('.csv')]
+
+    for csv in csv_files:
+        # Pick out the paths to each of the CSVs
+        csv_path = os.path.join(input_directory, csv)
+
+        # Read in CSV as dataframe
+        df = pd.read_csv(csv_path)
+        df_list.append(df)
+
+    for df in df_list:
+        # Read in 'time' column as datetime to begin aggregating
+        df['time'] = pd.to_datetime(group_df['valid_time'], format='%m/%d/%Y %I:%M')
+
+        # Access date by extracting it 
+        df['date'] = df['time'].dt.date
+
+        # Aggregation 1: SUM THE TOTAL PRECIPIATION OVER THE DAY
+        daily_aggregated_df = df.groupby('date')['tp'].sum().reset_index()
+
+```
