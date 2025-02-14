@@ -1,0 +1,21 @@
+---
+title: "EEC Advising Meeting"
+subtitle: "Jack Bienvenue"
+date: "February 14, 2025"
+format: revealjs
+revealjs-theme: "simple" 
+revealjs-transition: "fade" 
+highlight-style: "github"  
+slide-number: true 
+---
+
+## Organization
+
+Materials for the internship are hosted on Github:
+
+- [https://github.com/jackbienvenue/weather-driver-independence-evaluation](https://github.com/jackbienvenue/weather-driver-independence-evaluation)
+- Scripts are publicly available, and could be of use to others
+
+## Progress
+
+## Plans
