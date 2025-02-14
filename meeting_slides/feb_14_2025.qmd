@@ -55,4 +55,6 @@ hourly - whether or not to export data at an hourly resolution
 ## Questions
 
 - Which aggregations are the most useful for drivers over a daily period?
-- Are there particular visualizations useful to the project for reporting?
+    - Wind speed: average, max, average of top quantile?
+- Are there particular visualizations I can make which can be useful to the project for reporting?
+- 
