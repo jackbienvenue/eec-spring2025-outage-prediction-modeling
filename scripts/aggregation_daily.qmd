@@ -74,8 +74,11 @@ def daily_aggregator(input_directory, output_path):
             high_temperature=('t2m', 'max'),
             # Find low temp
             low_temperature=('t2m', 'min'),
-            # 
-            avg_wind_speed=('wind_speed', 'max')
+            # Find avg temp
+            avg_temp=('t2m', 'avg'),
+            # Find avg wind speed
+            avg_wind_speed=('wind_speed', 'avg'),
+            # Find wind duration 
             ).reset_index()
 
 #-----------------------------------------------------------
@@ -112,7 +115,8 @@ def daily_aggregator(input_directory, output_path):
             df = df.sort_values(by='time')
 
             # Export the DataFrame to CSV
-            df.to_csv(full_path, index=False)
+            print(daily_aggregated_df)
+            #daily_aggregated_df.to_csv(full_path, index=False)
 
     export_dfs_to_csv(df_list, output_path)
 
