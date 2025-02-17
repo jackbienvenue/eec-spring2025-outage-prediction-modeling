@@ -254,7 +254,7 @@ output_directory_path - output path for the NEW directory that is meant to store
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_2023_01.grib", "download_ERA5_LAND_package_2023_01.grib", "../data/data_CT/", "../data/fix_hourly_replicate_issue/", hourly = True)
+grib_folder_processing("download_ERA5_LAND_package_1979_01.grib", "download_ERA5_LAND_package_1983_12.grib", "/Volumes/JB_Fortress_L3/EEC/split_data_CT/batch1", "/Volumes/JB_Fortress_L3/EEC/hourly_csvs_batch1", hourly = True)
 
 ```
 
