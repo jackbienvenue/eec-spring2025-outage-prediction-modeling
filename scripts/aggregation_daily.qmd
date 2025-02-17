@@ -75,10 +75,12 @@ def daily_aggregator(input_directory, output_path):
             # Find low temp
             low_temperature=('t2m', 'min'),
             # Find avg temp
-            avg_temp=('t2m', 'avg'),
+            avg_temp=('t2m', 'mean'),
             # Find avg wind speed
-            avg_wind_speed=('wind_speed', 'avg'),
-            # Find wind duration 
+            avg_wind_speed=('wind_speed', 'mean'),
+            # Find 9 m/s wind duration (DEFINED BY THE COUNT OF 
+            #   HOURS WHERE WIND SPEED >= 9 m/s) 
+            wind_duration_9ms=('wind_speed', lambda x: (x >= 9).sum())
             ).reset_index()
 
 #-----------------------------------------------------------
