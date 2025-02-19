@@ -1,0 +1,32 @@
+---
+title: Mapping Covariance of Drivers of Grid Cells
+author: Jack Bienvenue
+date: 19 February 2025
+format: html
+---
+
+In this file, we will visualize relationships between driver variables on a spatial level. We suspect that the extent of correlation of drivers is not spatially stationary, as different topographical, metereological, and altitude factors could influence the drivers and their relationships throughout the region of interest. 
+
+We will visualize the correlations (not covariance here for standardization of the graphics) to examine the range of correlations and whether there appear to be any gradients in the map.
+
+```{python}
+# Package Import
+import pandas as pd
+import geopandas as gpd
+
+# Data Import
+
+```
+
+Let's move onto building a function to get the correlation map for two drivers:
+
+``` {python}
+def build_driver_correlation_map(driver1, driver2, ..., save_to_file, output_directory = None)
+
+```
+
+Now, let's put our function to work and observe some of these maps:
+
+``` {python}
+
+```
