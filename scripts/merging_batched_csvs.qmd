@@ -1,0 +1,96 @@
+---
+title: Merging 
+format: html
+author: Jack Bienvenue
+Date: "February 14, 2025"
+---
+
+We found that the computational time is too long to run the hourly times series as a single iteration in the *grib_to_csv.qmd* script. While this is unfortunate, we were able to run the operation by batching the years into sections. These sections were:
+
+| Batch   | Start Year | End Year |
+|---------|------------|----------|
+| Batch 1 | 1979       | 1983     |
+| Batch 2 | 1984       | 1988     |
+| Batch 3 | 1989       | 1993     |
+| Batch 4 | 1994       | 1997     |
+| Batch 5 | 1998       | 2002     |
+| Batch 6 | 2003       | 2007     |
+| Batch 7 | 2008       | 2013     |
+| Batch 8 | 2014       | 2017     |
+| Batch 9 | 2018       | 2023     |
+
+Now, let's use this script to create a function to "glue" together the CSVs in order to get our final dataset for aggregation.
+
+``` {python}
+# Package import
+import pandas as pd
+import os
+```
+
+```{python}
+# Function definition
+def merge_batched_csvs(parent_directory, output_directory, no_batches):
+
+'''
+ARGUMENTS:
+
+parent_directory - the directory which lists each batch's directory. 
+
+output_directory - the directory in which to store the output CSVs
+
+no_batches - indicates the number of batches to fuse. Batches are fused in order. 
+
+NOTE:
+Batches should be named in the format "hourly_csvs_batchX", where "X" represents the batch number. Batch should be numbered starting at "hourly_csvs_batch1".
+'''
+
+# FUNCTION PHASE 1 --- PRELIMINARIES:
+
+## Function to create output directory if it does not exist:
+
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+# FUNCTION PHASE 2 --- ITERATION:
+
+    # Loop over each batch number
+    for batch_num in range(1, no_batches + 1):
+        batch_dir = os.path.join(parent_directory, f"hourly_csvs_batch{batch_num}")
+        
+        # Get all CSV filenames in the current batch directory
+        if not os.path.exists(batch_dir):
+            print(f"Warning: {batch_dir} does not exist. Skipping this batch.")
+            continue
+        
+        batch_files = os.listdir(batch_dir)
+        batch_files = [f for f in batch_files if f.endswith('.csv')]  # Only get CSV files
+        
+        # For each file in the first batch, we will try to find it in all subsequent batches
+        for file_name in batch_files:
+            # List to store dataframes of the current file across batches
+            data_frames = []
+            
+            # Go through each batch and try to read the file
+            for i in range(1, no_batches + 1):
+                batch_dir_i = os.path.join(parent_directory, f"hourly_csvs_batch{i}")
+                file_path = os.path.join(batch_dir_i, file_name)
+                
+                if os.path.exists(file_path):
+                    # Read CSV file and append to the list of dataframes
+                    df = pd.read_csv(file_path)
+                    data_frames.append(df)
+                else:
+                    print(f"Warning: File {file_name} does not exist in {batch_dir_i}. Skipping this file.")
+            
+            # Merge all dataframes for this file and save as a single CSV
+            if data_frames:
+                merged_df = pd.concat(data_frames, ignore_index=True)
+                output_file_path = os.path.join(output_directory, file_name)
+                merged_df.to_csv(output_file_path, index=False)
+                print(f"Merged {file_name} and saved to {output_file_path}")
+```
+
+``` {python}
+
+
+```
