@@ -1,5 +1,5 @@
 ---
-title: Merging 
+title: Merging Batched CSV files into Complete CSVs
 format: html
 author: Jack Bienvenue
 Date: "February 14, 2025"
@@ -31,20 +31,20 @@ import os
 # Function definition
 def merge_batched_csvs(parent_directory, output_directory, no_batches):
 
-'''
-Merges multiple CSV files from several batches into a single file in the output directory.
+    '''
+    Merges multiple CSV files from several batches into a single file in the output directory.
 
-ARGUMENTS:
+    ARGUMENTS:
 
-parent_directory - the directory which lists each batch's directory. 
+    parent_directory - the directory which lists each batch's directory. 
 
-output_directory - the directory in which to store the output CSVs
+    output_directory - the directory in which to store the output CSVs
 
-no_batches - indicates the number of batches to fuse. Batches are fused in order. 
+    no_batches - indicates the number of batches to fuse. Batches are fused in order. 
 
-NOTE:
-Batches should be named in the format "hourly_csvs_batchX", where "X" represents the batch number. Batch should be numbered starting at "hourly_csvs_batch1".
-'''
+    NOTE:
+    Batches should be named in the format "hourly_csvs_batchX", where "X" represents the batch number. Batch should be numbered starting at "hourly_csvs_batch1".
+    '''
 
 # FUNCTION PHASE 1 --- PRELIMINARIES:
 
@@ -96,5 +96,5 @@ Batches should be named in the format "hourly_csvs_batchX", where "X" represents
 Let's put this new function to work with the following:
 
 ``` {python}
-merge_batched_csvs("/Volumes/JB_Fortress_L3/EEC/csv_batches", "/Volumes/JB_Fortress_L3/EEC/merged_csvs", 2)
+merge_batched_csvs("/Volumes/JB_Fortress_L3/EEC/csv_batches", "/Volumes/JB_Fortress_L3/EEC/merged_csvs", 9)
 ```
