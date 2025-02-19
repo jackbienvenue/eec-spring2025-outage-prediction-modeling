@@ -256,7 +256,7 @@ RUNNING HOURLY=TRUE FOR SPANS OF TIME BEYOND 5 YEAR INTERVALS MAY CAUSE THE KERN
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_2014_01.grib", "download_ERA5_LAND_package_2017_12.grib", "/Volumes/JB_Fortress_L3/EEC/data_CT", "/Volumes/JB_Fortress_L3/EEC/hourly_csvs_batch8", hourly = True)
+grib_folder_processing("download_ERA5_LAND_package_2014_01.grib", "download_ERA5_LAND_package_2017_12.grib", "/Volumes/JB_Fortress_L3/EEC/data_CT", "/Volumes/JB_Fortress_L3/EEC/hourly_csvs_batch8", hourly = True) # Use relative paths for local data, absolute paths for external drives
 
 ```
 

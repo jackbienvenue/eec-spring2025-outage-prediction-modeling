@@ -32,6 +32,8 @@ import os
 def merge_batched_csvs(parent_directory, output_directory, no_batches):
 
 '''
+Merges multiple CSV files from several batches into a single file in the output directory.
+
 ARGUMENTS:
 
 parent_directory - the directory which lists each batch's directory. 
@@ -88,9 +90,11 @@ Batches should be named in the format "hourly_csvs_batchX", where "X" represents
                 output_file_path = os.path.join(output_directory, file_name)
                 merged_df.to_csv(output_file_path, index=False)
                 print(f"Merged {file_name} and saved to {output_file_path}")
+    
 ```
 
+Let's put this new function to work with the following:
+
 ``` {python}
-
-
+merge_batched_csvs("/Volumes/JB_Fortress_L3/EEC/csv_batches", "/Volumes/JB_Fortress_L3/EEC/merged_csvs", 2)
 ```
