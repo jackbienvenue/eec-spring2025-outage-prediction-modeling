@@ -21,12 +21,37 @@ import geopandas as gpd
 Let's move onto building a function to get the correlation map for two drivers:
 
 ``` {python}
-def build_driver_correlation_map(driver1, driver2, ..., save_to_file, output_directory = None)
+def build_driver_correlation_map(driver1, driver2, shapefile, ... , save_to_file, output_directory = None)
 
+
+
+
+    # Generate map title
+
+    # Generate axis labels
+
+    # Construct map
 ```
+
+We will start by observing the relationship between the following drivers:
+
+1. Average Daily Wind Speed & Total Daily Precipitation
+2. 
+3.
+4.
+
 
 Now, let's put our function to work and observe some of these maps:
 
 ``` {python}
+#| eval: false
+#| echo: false
 
+build_driver_correlation_map()
+
+build_driver_correlation_map()
+
+build_driver_correlation_map()
+
+build_driver_correlation_map()
 ```
