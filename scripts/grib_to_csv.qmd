@@ -244,17 +244,19 @@ Below, you can execute the function by using your parameters of choice
 #| eval: true
 
 '''
-Recall:
-
 ARGUMENTS:
 earliest_file - the EARLIEST chronological file (NAME only, no prefixes)
 latest_file - the LATEST chronological file (NAME only, no prefixes)
 input_directory - input directory which hosts the files (use relative path)
 output_directory_path - output path for the NEW directory that is meant to store the new, grid-cell-specific CSVs
+
+NOTE:
+
+RUNNING HOURLY=TRUE FOR SPANS OF TIME BEYOND 5 YEAR INTERVALS MAY CAUSE THE KERNEL TO DIE WHILE PROCESSING. FOR BEST RESULTS, BATCH THE OPERATIONS AND RESOLVE BATCHING IN ./merging_batched_csvs.qmd
 '''
 
 # Function use:
-grib_folder_processing("download_ERA5_LAND_package_2003_01.grib", "download_ERA5_LAND_package_2007_12.grib", "/Volumes/JB_Fortress_L3/EEC/data_CT", "/Volumes/JB_Fortress_L3/EEC/hourly_csvs_batch5", hourly = True)
+grib_folder_processing("download_ERA5_LAND_package_2014_01.grib", "download_ERA5_LAND_package_2017_12.grib", "/Volumes/JB_Fortress_L3/EEC/data_CT", "/Volumes/JB_Fortress_L3/EEC/hourly_csvs_batch8", hourly = True)
 
 ```
 
