@@ -73,7 +73,7 @@ for idx, row in gdf.iterrows():
     grid_cells.append(grid_cell)
 
 # Step 5: Create a GeoDataFrame for the grid cells and save as shapefile
-gdf_grid_cells = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:26986")
+gdf_grid_cells = gpd.GeoDataFrame(geometry=grid_cells, crs="EPSG:4326")
         ## Coordinate Reference System set to Universal Transverse Mercator for CT
 
 # Step 6: Visualize the grid cells on a map using Folium
@@ -84,4 +84,22 @@ m
 
 # Save grid cells to shapefile
 gdf_grid_cells.to_file("../data/grid_cell_shapefile/grid_cells.shp")
+```
+
+Map out the shapefile to verify:
+
+``` {python}
+#| echo: false
+gdf_grid_cells_wgs84 = gdf_grid_cells.to_crs(epsg=4326)
+
+# Step 7: Initialize the Folium map centered on the average centroid of the grid cells
+m = folium.Map(location=[gdf_grid_cells_wgs84.geometry.centroid.y.mean(), 
+                         gdf_grid_cells_wgs84.geometry.centroid.x.mean()],
+               zoom_start=12, control_scale=True)
+
+# Step 8: Add GeoJSON of the grid cells to the map
+folium.GeoJson(gdf_grid_cells_wgs84).add_to(m)
+
+# Display the map
+m
 ```
