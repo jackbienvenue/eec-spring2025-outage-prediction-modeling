@@ -13,24 +13,134 @@ We will visualize the correlations (not covariance here for standardization of t
 # Package Import
 import pandas as pd
 import geopandas as gpd
-
-# Data Import
-
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+import re
 ```
 
 Let's move onto building a function to get the correlation map for two drivers:
 
 ``` {python}
-def build_driver_correlation_map(driver1, driver2, shapefile, ... , save_to_file, output_directory = None)
+def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_directory, save_to_file = False, output_directory = None):
 
+    '''
+    Takes input target drivers, relates their correlation within individual grid cells, and outputs a map of the grid cells with their correlations.
 
+    ARGUMENTS:
+    1. driver1 - title of the column for the first driver of interest in the CSV (df) that is brought in for the analysis
+    2. driver2 - title of the column for the second driver of interest in the CSV (df) that is brought in for the analysis
+    3. shapefile_directory - path for the directory housing the files making up the grid cell shapefiles
+    4. input_directory - path for the directory housing the CSVs for data for the grid cells
+    5. save_to_file (DEFAULTS TO False for no file output)
+    6. output_directory (DEFAULTS TO None for no file output)
 
+    '''
+    # Prelimaries - Build helper functions:
+    def extract_lat_lon_from_filename(filename):
+        """
+        Extract latitude and longitude from the CSV filename.
+        Example: "lat_40_98_lon_-73_12768_time_series_weather.csv"
+        """
+        # Use regex to extract latitude and longitude from filename
+        lat_match = re.search(r"lat_([\d\.\-]+)_", filename)
+        lon_match = re.search(r"lon_([\d\.\-]+)_", filename)
+        
+        if lat_match and lon_match:
+            lat = float(lat_match.group(1))
+            lon = float(lon_match.group(1))
+            return lat, lon
+        else:
+            raise ValueError(f"Filename format is incorrect. Could not extract latitude/longitude from {filename}")
 
-    # Generate map title
+    def create_directory(output_directory_path):
+        if not os.path.exists(output_directory_path):
+            os.makedirs(output_directory_path)
 
-    # Generate axis labels
+    # FUNCTION PHASE 1: Calculating correlations for individual grid cells
 
-    # Construct map
+    ## Step 1: Load in shapefile
+    shapefile = gpd.read_file(shapefile_directory)
+    shapefile = shapefile.to_crs(epsg=4326) # Confirm the correct coordinate projection
+
+    ## Step 2: Initialization of empty list for storage
+    correlations = []
+    
+    ## Step 3: Load CSVs and iteratively calculate correlation
+
+    for filename in os.listdir(input_directory):
+        if filename.endswith(".csv"):
+            # Extract lat/long
+            lat, lon = extract_lat_lon_from_filename(filename)
+
+            # Load CSV data for given grid cell
+            csv_file = os.path.join(input_directory, filename)
+            df = pd.read_csv(csv_file)
+
+            # Confirm presence of drivers
+            if driver1 not in df.columns or driver2 not in df.columns:
+                raise ValueError(f"Columns {driver1} or {driver2} not found in CSV {filename}")
+
+            # Calculate correlation of drivers:
+            correlation = np.corrcoef(df[driver1], df[driver2])[0, 1]
+
+            # Store result w/ its lat and long:
+            correlations.append((lat, lon, correlation))
+
+        # Turn list of results into df 
+    correlation_df = pd.DataFrame(correlations, columns = ["latitude", "longitude", "correlation"])
+
+    # FUNCTION PHASE 2: Mapping
+
+    # Step 4: Merge the correlation data with the shapefile based on latitude/longitude
+    # We will use a spatial join between the shapefile and the correlation data
+    correlation_gdf = gpd.GeoDataFrame(correlation_df, 
+                                       geometry=gpd.points_from_xy(correlation_df.longitude, correlation_df.latitude),
+                                       crs=shapefile.crs)
+
+    # Spatial join based on proximity (you can adjust the max_distance tolerance)
+    merged = gpd.sjoin(shapefile, correlation_gdf, how="left", op="intersects")
+
+    # Step 5: Generate map title from driver names
+    map_title = f"Correlation between {driver1} and {driver2}"
+
+    # Step 6: Generate axis labels from driver names
+    xlabel = driver1
+    ylabel = driver2
+
+    # Step 7: Create a color map for the correlation values
+    cmap = plt.cm.get_cmap('coolwarm')  # Use a diverging color map for correlations (-1 to 1)
+
+    # Step 8: Construct map with geopandas
+    fig, ax = plt.subplots(figsize=(10, 10))
+    merged.plot(column='correlation', cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8', legend=True)
+
+    ax.set_title(map_title, fontdict={'fontsize': 16})
+    ax.set_xlabel(xlabel, fontsize=12)
+    ax.set_ylabel(ylabel, fontsize=12)
+
+    # Add a colorbar to the plot for the correlation scale
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
+    sm.set_array([])  # Use this for colorbar
+    cbar = fig.colorbar(sm)
+    cbar.set_label('Correlation', fontsize=12)
+
+    # FUNCTION PHASE 3: Saving map to file (if desired)
+
+    if save_to_file and output_directory is not None:
+        # Make sure the output directory exists
+        os.makedirs(output_directory, exist_ok=True)
+
+        # Save the figure to the output directory
+        output_file = os.path.join(output_directory, f'correlation_map_{driver1}_{driver2}.png')
+        fig.savefig(output_file, dpi=300)
+        plt.close(fig)  # Close the figure to free memory
+
+    else:
+        # If not saving, just show the map
+        plt.show()
+
 ```
 
 We will start by observing the relationship between the following drivers:
@@ -44,14 +154,21 @@ We will start by observing the relationship between the following drivers:
 Now, let's put our function to work and observe some of these maps:
 
 ``` {python}
-#| eval: false
+#| eval: true
 #| echo: false
 
-build_driver_correlation_map()
+    '''
+    Takes input target drivers, relates their correlation within individual grid cells, and outputs a map of the grid cells with their correlations.
 
-build_driver_correlation_map()
+    ARGUMENTS:
+    1. driver1 - title of the column for the first driver of interest in the CSV (df) that is brought in for the analysis
+    2. driver2 - title of the column for the second driver of interest in the CSV (df) that is brought in for the analysis
+    3. shapefile_directory - path for the directory housing the files making up the grid cell shapefiles
+    4. input_directory - path for the directory housing the CSVs for data for the grid cells
+    5. save_to_file (DEFAULTS TO False for no file output)
+    6. output_directory (DEFAULTS TO None for no file output)
 
-build_driver_correlation_map()
+    '''
 
-build_driver_correlation_map()
+build_driver_correlation_map("avg_wind_speed", "total_precipitation", "/Users/jackbienvenuejr/Desktop/EEC_Work/weather-driver-independence-evaluation/data/grid_cell_shapefile", "/Volumes/JB_Fortress_L3/EEC/aggregated_csvs")
 ```
