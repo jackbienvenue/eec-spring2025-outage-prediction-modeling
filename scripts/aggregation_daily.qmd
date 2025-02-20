@@ -79,7 +79,7 @@ def daily_aggregator(input_directory, output_path):
             # Find avg wind speed
             avg_wind_speed=('wind_speed', 'mean'),
             # Find 9 m/s wind duration (DEFINED BY THE COUNT OF 
-            #   HOURS WHERE WIND SPEED >= 9 m/s) 
+            # HOURS WHERE WIND SPEED >= 9 m/s) 
             wind_duration_9ms=('wind_speed', lambda x: (x >= 9).sum())
             ).reset_index()
 
@@ -117,8 +117,8 @@ def daily_aggregator(input_directory, output_path):
             df = df.sort_values(by='time')
 
             # Export the DataFrame to CSV
-            print(daily_aggregated_df)
-            #daily_aggregated_df.to_csv(full_path, index=False)
+            #print(daily_aggregated_df)
+            daily_aggregated_df.to_csv(full_path, index=False)
 
     export_dfs_to_csv(df_list, output_path)
 
@@ -127,5 +127,11 @@ def daily_aggregator(input_directory, output_path):
 Let's try the function:
 
 ``` {python}
-daily_aggregator('../data/fix_hourly_replicate_issue/', '../data/aggregation_trial/')
+''' 
+input_directory - input directory which houses the target files (enter as relative path)
+
+output_path - output path for the NEW directory that 
+    is meant to store the new, aggregated CSVs (enter as path)
+'''
+daily_aggregator('/Volumes/JB_Fortress_L3/EEC/merged_csvs', '/Volumes/JB_Fortress_L3/EEC/aggregated_csvs')
 ```
