@@ -18,11 +18,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import re
+import folium
 ```
 
 Let's move onto building a function to get the correlation map for two drivers:
 
 ``` {python}
+#| eval: true
+
 def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_directory, save_to_file = False, output_directory = None):
 
     '''
@@ -43,13 +46,25 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
         Extract latitude and longitude from the CSV filename.
         Example: "lat_40_98_lon_-73_12768_time_series_weather.csv"
         """
+
         # Use regex to extract latitude and longitude from filename
-        lat_match = re.search(r"lat_([\d\.\-]+)_", filename)
-        lon_match = re.search(r"lon_([\d\.\-]+)_", filename)
-        
+        lat_match = re.search(r"lat_([-]?\d+_\d+)_", filename)
+        lon_match = re.search(r"lon_([-]?\d+_\d+)_", filename)
+
         if lat_match and lon_match:
-            lat = float(lat_match.group(1))
-            lon = float(lon_match.group(1))
+            # Split the latitude and longitude at the underscore
+            lat_parts = lat_match.group(1).split('_')
+            lon_parts = lon_match.group(1).split('_')
+
+            # Combine the degree and minute part as a decimal
+            lat = float(lat_parts[0] + '.' + lat_parts[1])  # Degrees.Minutes format
+            lon = float(lon_parts[0] + '.' + lon_parts[1])  # Degrees.Minutes format
+
+            # Round the latitude and longitude to 5 decimal places
+            lat = round(lat, 5)
+            lon = round(lon, 5)
+
+            ####print('lat:', lat, 'lon:', lon) Debugging
             return lat, lon
         else:
             raise ValueError(f"Filename format is incorrect. Could not extract latitude/longitude from {filename}")
@@ -67,7 +82,7 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
     ## Step 2: Initialization of empty list for storage
     correlations = []
     
-    ## Step 3: Load CSVs and iteratively calculate correlation
+    ## Step 3: Load CSVs for individual grid cells and iteratively calculate correlation
 
     for filename in os.listdir(input_directory):
         if filename.endswith(".csv"):
@@ -91,7 +106,30 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
         # Turn list of results into df 
     correlation_df = pd.DataFrame(correlations, columns = ["latitude", "longitude", "correlation"])
 
+    print(correlation_df)
+
+#------------------------------------------ DEBUGGING MAP
+    m = folium.Map(location=[correlation_df["latitude"].mean(), correlation_df["longitude"].mean()], zoom_start=10)
+
+    # Plot each point on the map with a color based on the correlation value
+    for _, row in correlation_df.iterrows():
+        folium.CircleMarker(
+            location=[row["latitude"], row["longitude"]],
+            radius=8,
+            color='blue' if row["correlation"] > 0 else 'red',  # Color based on correlation value
+            fill=True,
+            fill_color='blue' if row["correlation"] > 0 else 'red',  # Same color for the fill
+            fill_opacity=0.6,
+            popup=f'Lat: {row["latitude"]}, Lon: {row["longitude"]}, Correlation: {row["correlation"]:.2f}'
+        ).add_to(m)
+
+    # Display the map
+    m.save("trial_point_map.html")
+
+#------------------------------------------
+
     # FUNCTION PHASE 2: Mapping
+
 
     # Step 4: Merge the correlation data with the shapefile based on latitude/longitude
     # We will use a spatial join between the shapefile and the correlation data
@@ -100,7 +138,7 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
                                        crs=shapefile.crs)
 
     # Spatial join based on proximity (you can adjust the max_distance tolerance)
-    merged = gpd.sjoin(shapefile, correlation_gdf, how="left", op="intersects")
+    merged = gpd.sjoin(shapefile, correlation_gdf, how="left", predicate="intersects")
 
     # Step 5: Generate map title from driver names
     map_title = f"Correlation between {driver1} and {driver2}"
@@ -114,17 +152,11 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
 
     # Step 8: Construct map with geopandas
     fig, ax = plt.subplots(figsize=(10, 10))
-    merged.plot(column='correlation', cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8', legend=True)
+    merged.plot(column='correlation', cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8', legend = True)
 
     ax.set_title(map_title, fontdict={'fontsize': 16})
     ax.set_xlabel(xlabel, fontsize=12)
     ax.set_ylabel(ylabel, fontsize=12)
-
-    # Add a colorbar to the plot for the correlation scale
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
-    sm.set_array([])  # Use this for colorbar
-    cbar = fig.colorbar(sm)
-    cbar.set_label('Correlation', fontsize=12)
 
     # FUNCTION PHASE 3: Saving map to file (if desired)
 
@@ -140,7 +172,6 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
     else:
         # If not saving, just show the map
         plt.show()
-
 ```
 
 We will start by observing the relationship between the following drivers:
