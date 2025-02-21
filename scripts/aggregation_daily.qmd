@@ -18,25 +18,10 @@ We will seek the following information:
 
 ``` {python}
 
-# Package import
 import pandas as pd
 import os
 
-''' 
-Let's define a function to perform the aggregation:
-
-ARGUMENTS:
-
-input_directory - input directory which houses the target files (enter as relative path)
-
-output_path - output path for the NEW directory that 
-    is meant to store the new, aggregated CSVs (enter as path)
-
-NOTE: THIS FUNCTION WILL ONLY RETURN USEFUL AGGREGATIONS WHEN GIVEN DATA WITH HOURLY GRANULARITY AS AN INPUT.
-'''
-
 def daily_aggregator(input_directory, output_path):
-
     # Initialize empty list to store DataFrames
     df_list = []
 
@@ -54,51 +39,54 @@ def daily_aggregator(input_directory, output_path):
         df = pd.read_csv(csv_path)
         df_list.append(df)
 
-    for df in df_list:
-        # Read in 'time' column as datetime to begin aggregating
-        df['time'] = pd.to_datetime(df['time'])
-
-        # Access date by extracting it 
-        df['date'] = df['time'].dt.date
-
-        # Pre-processing for aggregation (wind speed triangulation)
-
-        df['wind_speed'] = ((df['u10'])**2 + (df['v10'])**2)**(0.5)
-
-        # Aggregation: 
-
-        daily_aggregated_df = df.groupby('date').agg(
-            # Sum 'tp' to get total precipitation
-            total_precipitation=('tp', 'sum'),
-            # Find high temp
-            high_temperature=('t2m', 'max'),
-            # Find low temp
-            low_temperature=('t2m', 'min'),
-            # Find avg temp
-            avg_temp=('t2m', 'mean'),
-            # Find avg wind speed
-            avg_wind_speed=('wind_speed', 'mean'),
-            # Find 9 m/s wind duration (DEFINED BY THE COUNT OF 
-            # HOURS WHERE WIND SPEED >= 9 m/s) 
-            wind_duration_9ms=('wind_speed', lambda x: (x >= 9).sum())
-            ).reset_index()
-
-#-----------------------------------------------------------
-# EXPORT FILES
-
     def create_directory(output_path):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
     def export_dfs_to_csv(dfs, output_path): 
-        create_directory(output_path) # Ensure directory exists
+        create_directory(output_path)  # Ensure directory exists
 
-            # Iterate through the list of DataFrames
-        for idx, df in enumerate(dfs):
+        # Iterate through the list of DataFrames
+        for df in dfs:
+            # Read in 'time' column as datetime to begin aggregating
+            df['time'] = pd.to_datetime(df['time'])
+
+            # Access date by extracting it 
+            df['date'] = df['time'].dt.date
+
+            # Pre-processing for aggregation (wind speed triangulation)
+            df['wind_speed'] = ((df['u10'])**2 + (df['v10'])**2)**(0.5)
+            
+            
+            #### DEBUGGING:
+
+            ####max_wind_speed = df['wind_speed'].max()
+            ####print(f"Maximum Wind Speed: {max_wind_speed}")
+
+            #----------------------------------
+
+            # Aggregation:
+            daily_aggregated_df = df.groupby('date').agg(
+                # Sum 'tp' to get total precipitation
+                total_precipitation=('tp', 'sum'),
+                # Find high temp
+                high_temperature=('t2m', 'max'),
+                # Find low temp
+                low_temperature=('t2m', 'min'),
+                # Find avg temp
+                avg_temp=('t2m', 'mean'),
+                # Find avg wind speed
+                avg_wind_speed=('wind_speed', 'mean'),
+                # Find 9 m/s wind duration (DEFINED BY THE COUNT OF 
+                # HOURS WHERE WIND SPEED >= 9 m/s)
+                wind_duration_9ms=('wind_speed', lambda x: (x >= 9).sum())
+            ).reset_index()
+
+            # Now for exporting
 
             lat = df['latitude'].iloc[0]
             lon = df['longitude'].iloc[0]
-            lon = lon.round(5) # for consistency and brevity
+            lon = lon.round(5)  # for consistency and brevity
 
             # Create a filename using latitude, longitude, and an index
             filename = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
@@ -109,15 +97,14 @@ def daily_aggregator(input_directory, output_path):
 
             # Join the filename back together
             filename = '.'.join(filename)
-            
+
             # Construct the full path for the CSV file
             full_path = os.path.join(output_path, filename)
 
             # Compensate for error:
-            df = df.sort_values(by='time')
+            daily_aggregated_df = daily_aggregated_df.sort_values(by='date')
 
             # Export the DataFrame to CSV
-            #print(daily_aggregated_df)
             daily_aggregated_df.to_csv(full_path, index=False)
 
     export_dfs_to_csv(df_list, output_path)
