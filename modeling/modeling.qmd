@@ -1,0 +1,17 @@
+---
+author: Jack Bienvenue
+date: 22 Februrary 2025
+format: html
+---
+
+Now that the outage data is accessible, we will use it to build models to predict power outages.
+
+```{python}
+# Package Import
+import pandas as pd
+import geopandas as gpd
+
+# Data Import
+outages = pd.read_csv("../data/outage_data.csv")
+grid_cells = gpd.read_file("../data/grid_cell_shapefile") 
+```
