@@ -7,6 +7,8 @@ format: html
 Now that the outage data is accessible, we will use it to build models to predict power outages.
 
 ```{python}
+#| echo: false
+
 # Package Import
 import pandas as pd
 import geopandas as gpd
@@ -15,3 +17,8 @@ import geopandas as gpd
 outages = pd.read_csv("../data/outage_data.csv")
 grid_cells = gpd.read_file("../data/grid_cell_shapefile") 
 ```
+
+Let's consider some model types to use and implement them:
+1. 
+2. 
+3. 
