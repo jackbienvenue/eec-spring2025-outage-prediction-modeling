@@ -19,6 +19,7 @@ import seaborn as sns
 import os
 import re
 import folium
+from matplotlib.colors import Normalize
 ```
 
 Let's move onto building a function to get the correlation map for two drivers:
@@ -147,21 +148,30 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
     xlabel = driver1
     ylabel = driver2
 
-    # Step 7: Create a color map for the correlation values
+    # Step 7: Set Seaborn Style
+    sns.set(style="whitegrid")  # Seaborn's 'whitegrid' gives a clean and polished look
+
+    # Step 8: Create a color map for the correlation values
     cmap = plt.cm.get_cmap('coolwarm')  # Use a diverging color map for correlations (-1 to 1)
 
-    # Step 8: Construct map with geopandas
+    # Step 9: Construct the map with geopandas
     fig, ax = plt.subplots(figsize=(10, 10))
-    merged.plot(column='correlation', cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8', legend = True)
 
-    ax.set_title(map_title, fontdict={'fontsize': 16})
+    # Step 10: Standardize scale
+
+    norm = Normalize(vmin = -0.5, vmax = 0.5)
+
+    # Plot the correlation values
+    merged.plot(column='correlation', cmap=cmap, linewidth=0.8, ax=ax, edgecolor='0.8', legend=True, norm=norm)
+
+    # Customize the title and labels with Seaborn's font management
+    ax.set_title(map_title, fontsize=16, fontweight='bold')
     ax.set_xlabel(xlabel, fontsize=12)
     ax.set_ylabel(ylabel, fontsize=12)
 
     # FUNCTION PHASE 3: Saving map to file (if desired)
-
     if save_to_file and output_directory is not None:
-        # Make sure the output directory exists
+        # Ensure the output directory exists
         os.makedirs(output_directory, exist_ok=True)
 
         # Save the figure to the output directory
@@ -170,17 +180,9 @@ def build_driver_correlation_map(driver1, driver2, shapefile_directory, input_di
         plt.close(fig)  # Close the figure to free memory
 
     else:
-        # If not saving, just show the map
+        # If not saving, show the map
         plt.show()
 ```
-
-We will start by observing the relationship between the following drivers:
-
-1. Average Daily Wind Speed & Total Daily Precipitation
-2. 
-3.
-4.
-
 
 Now, let's put our function to work and observe some of these maps:
 
@@ -202,4 +204,10 @@ Now, let's put our function to work and observe some of these maps:
     '''
 
 build_driver_correlation_map("avg_wind_speed", "avg_temp", "/Users/jackbienvenuejr/Desktop/EEC_Work/weather-driver-independence-evaluation/data/grid_cell_shapefile", "/Volumes/JB_Fortress_L3/EEC/aggregated_csvs")
+```
+
+Let's continue by making a way to embed multiple driver relationships on a single graphic:
+
+``` (python)
+
 ```
