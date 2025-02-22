@@ -201,5 +201,5 @@ Now, let's put our function to work and observe some of these maps:
 
     '''
 
-build_driver_correlation_map("avg_wind_speed", "total_precipitation", "/Users/jackbienvenuejr/Desktop/EEC_Work/weather-driver-independence-evaluation/data/grid_cell_shapefile", "/Volumes/JB_Fortress_L3/EEC/aggregated_csvs")
+build_driver_correlation_map("avg_wind_speed", "avg_temp", "/Users/jackbienvenuejr/Desktop/EEC_Work/weather-driver-independence-evaluation/data/grid_cell_shapefile", "/Volumes/JB_Fortress_L3/EEC/aggregated_csvs")
 ```
