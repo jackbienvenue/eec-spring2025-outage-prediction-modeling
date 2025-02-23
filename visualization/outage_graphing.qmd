@@ -1,0 +1,20 @@
+---
+author: Jack Bienvenue
+date: 23 February 2025
+format: html
+---
+
+In this file, we'll explore the dataset being used for our outcome variable, outages.
+
+``` {python}
+#| echo: false
+
+# Package import
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Data import
+df = pd.read_csv("../data/outage_data.csv")
+
+df
+```
