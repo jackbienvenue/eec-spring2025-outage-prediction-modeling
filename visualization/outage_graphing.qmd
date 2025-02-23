@@ -12,6 +12,8 @@ In this file, we'll explore the dataset being used for our outcome variable, out
 # Package import
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import folium
 
 # Data import
 df = pd.read_csv("../data/outage_data.csv")
@@ -45,6 +47,8 @@ plt.show()
 Let's now build a frequency plot of different numbers of customers affected:
 
 ```{python}
+#| echo: false
+
 # Step 1: Plotting the frequency of customers affected
 plt.figure(figsize=(10, 6))
 
@@ -58,5 +62,16 @@ plt.ylabel('Frequency', fontsize=12)
 
 # Step 4: Show the plot
 plt.tight_layout()
+plt.show()
+```
+
+Let's try the histogram again, this time with a log transformation:
+
+```{python}
+#| echo: false
+plt.hist(np.log(df['customers_affected']), bins=20, color='skyblue', edgecolor='black')
+plt.title('Log-Transformed Frequency Plot of Customers Affected')
+plt.xlabel('Log(Customers Affected)')
+plt.ylabel('Frequency')
 plt.show()
 ```
