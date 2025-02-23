@@ -15,6 +15,48 @@ import matplotlib.pyplot as plt
 
 # Data import
 df = pd.read_csv("../data/outage_data.csv")
+```
 
-df
+Let's start with a timeseries visualization of outage events:
+
+``` {python}
+# Step 1: Convert 'datetime' to pandas datetime format (if not already)
+df['datetime'] = pd.to_datetime(df['datetime'])
+
+# Step 2: Plotting the time series
+plt.figure(figsize=(10, 6))
+plt.plot(df['datetime'], df['customers_affected'], marker='o', linestyle='-', color='b')
+
+# Step 3: Formatting the plot
+plt.title('Time Series of Outages (Customers Affected)', fontsize=14)
+plt.xlabel('Date and Time', fontsize=12)
+plt.ylabel('Customers Affected', fontsize=12)
+plt.xticks(rotation=45)  # Rotate datetime labels for readability
+
+# Optional: To make the plot more readable, you can format the x-axis to show only the date
+plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%Y-%m-%d %H:%M'))
+
+# Step 4: Show the plot
+plt.tight_layout()
+plt.show()
+
+```
+
+Let's now build a frequency plot of different numbers of customers affected:
+
+```{python}
+# Step 1: Plotting the frequency of customers affected
+plt.figure(figsize=(10, 6))
+
+# Step 2: Create a histogram of 'customers_affected'
+plt.hist(df['customers_affected'], bins=20, color='skyblue', edgecolor='black')
+
+# Step 3: Formatting the plot
+plt.title('Frequency Plot of Different Numbers of Customers Affected', fontsize=14)
+plt.xlabel('Customers Affected', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+
+# Step 4: Show the plot
+plt.tight_layout()
+plt.show()
 ```
