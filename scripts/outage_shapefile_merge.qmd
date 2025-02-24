@@ -1,0 +1,64 @@
+---
+author: Jack Bienvenue
+title: Associating Outages with Grid Cells
+date: 24 February 2025
+format: html
+---
+
+In this file, we will join the outage data spatially with the grid cells in order to associate outages with specific grid cells for spatial analysis.
+
+``` {python}
+#| echo: false
+
+# Package Import
+import pandas as pd
+import geopandas as gpd
+import folium
+from folium import Choropleth
+import numpy as np
+
+# Data Import
+grid_cells = gpd.read_file("../data/grid_cell_shapefile/grid_cells.shp")
+outage_df = pd.read_csv("../data/outage_data.csv")
+```
+
+``` {python}
+# Convert the outage dataframe to a geodataframe
+outage_gdf = gpd.GeoDataFrame(outage_df, 
+                              geometry=gpd.points_from_xy(outage_df['longitude'], outage_df['latitude']),
+                              crs=grid_cells.crs)  # Ensure both datasets have the same CRS
+# Perform join
+joined_gdf = gpd.sjoin(outage_gdf, grid_cells, how="left", predicate="within")
+
+print(joined_gdf.head())
+```
+
+Now that we have created the new geodataframe associated each outage with a grid cell, let's map it out to confirm that we are experiencing the intended effects:
+
+``` {python}
+outage_counts = joined_gdf.groupby('index_right').size()
+
+grid_cells['log_outage_count'] = np.log(grid_cells.index.map(outage_counts).fillna(1))
+
+map_center = grid_cells.geometry.centroid.unary_union.centroid.coords[:]
+
+map_center = list(map_center[0])
+
+m = folium.Map(location=map_center, zoom_start=10)
+
+folium.Choropleth(
+    geo_data=grid_cells,
+    name="Log Outage Count",
+    data=grid_cells,
+    columns=["FID", "log_outage_count"],
+    key_on="feature.id",
+    fill_color="Blues",
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name="Log Outage Count"
+).add_to(m)
+
+folium.LayerControl().add_to(m)
+
+m
+```
