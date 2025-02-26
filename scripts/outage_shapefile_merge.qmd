@@ -40,12 +40,14 @@ outage_counts = joined_gdf.groupby('index_right').size()
 
 grid_cells['log_outage_count'] = np.log(grid_cells.index.map(outage_counts).fillna(1))
 
-map_center = grid_cells.geometry.centroid.unary_union.centroid.coords[:]
+import folium
 
-map_center = list(map_center[0])
+map_center = [41.6433, -72.6472] 
 
+# Create the folium map centered at the provided coordinates
 m = folium.Map(location=map_center, zoom_start=10)
 
+# Your Choropleth layer
 folium.Choropleth(
     geo_data=grid_cells,
     name="Log Outage Count",
@@ -56,6 +58,36 @@ folium.Choropleth(
     fill_opacity=0.7,
     line_opacity=0.2,
     legend_name="Log Outage Count"
+).add_to(m)
+
+# Add layer control
+folium.LayerControl().add_to(m)
+
+m
+
+```
+
+``` {python}
+outage_counts = joined_gdf.groupby('index_right').size()
+
+grid_cells['outage_count'] = grid_cells.index.map(outage_counts).fillna(1)
+
+map_center = grid_cells.geometry.centroid.unary_union.centroid.coords[:]
+
+map_center = [41.6433, -72.6472]
+
+m = folium.Map(location=map_center, zoom_start=10)
+
+folium.Choropleth(
+    geo_data=grid_cells,
+    name="Outage Count",
+    data=grid_cells,
+    columns=["FID", "outage_count"],
+    key_on="feature.id",
+    fill_color="Blues",
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name="Outage Count"
 ).add_to(m)
 
 folium.LayerControl().add_to(m)
