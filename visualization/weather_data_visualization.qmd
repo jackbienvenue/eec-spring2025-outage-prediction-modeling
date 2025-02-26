@@ -1,0 +1,27 @@
+---
+author: Jack Bienvenue
+date: 26 February 2025
+format: html
+title: "Exploring weather data visually"
+---
+
+``` {python}
+#| echo: false
+
+# Package import
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Data import
+df = pd.read_csv("/Volumes/JB_Fortress_L3/EEC/aggregated_csvs/lat_41_981_lon_-72_52737_time_series_weather.csv")
+```
+
+Let's check on the distribution of different precipitation levels. We want to look at individual days and create a histogram to represent the frequency of different precipitation levels to see if a clear separation emerges in terms of stormy days and relatively normal days. Let's try this. Note that the following is for a arbitrarily selected grid cell:
+
+``` {python}
+plt.hist(df['total_precipitation'], bins = 50, color = 'skyblue', range = (0,0.1)) # ARBITRARY RANGE, CUTS OFF DATA
+
+plt.title("Frequency of Daily Precipitation Totals")
+plt.xlabel("Total Precipitation (m)")
+plt.ylabel('Frequency')
+```
