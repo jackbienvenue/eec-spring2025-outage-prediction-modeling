@@ -91,3 +91,5 @@ plt.ylabel('Outage Duration (minutes)')
 plt.show()
 
 ```
+
+It looks as though it will be very challenging to establish a meaningful relationship between outage duration and the count of customers affected directly.
