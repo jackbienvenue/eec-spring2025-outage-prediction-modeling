@@ -53,10 +53,10 @@ Let's now build a frequency plot of different numbers of customers affected:
 plt.figure(figsize=(10, 6))
 
 # Step 2: Create a histogram of 'customers_affected'
-plt.hist(df['customers_affected'], bins=20, color='skyblue', edgecolor='black')
+plt.hist(df['customers_affected'], bins=50, color='skyblue', edgecolor='black', range=(0, 50))
 
 # Step 3: Formatting the plot
-plt.title('Frequency Plot of Different Numbers of Customers Affected', fontsize=14)
+plt.title('Frequency Plot of Number of Customers Affected (artificially small range)', fontsize=14)
 plt.xlabel('Customers Affected', fontsize=12)
 plt.ylabel('Frequency', fontsize=12)
 
@@ -74,4 +74,20 @@ plt.title('Log-Transformed Frequency Plot of Customers Affected')
 plt.xlabel('Log(Customers Affected)')
 plt.ylabel('Frequency')
 plt.show()
+```
+
+Let's create a scatterplot of the size and duration of the outages:
+
+``` {python}
+# Bring data within reasonable range (note, we are omitting data in the output which we have not shown to be outliers, this is simply for scaling for a better sense of the data distribution)
+
+new_df = df[(df['customers_affected'] < 5000) & (df['duration_minutes'] < 1440)] 
+
+plt.scatter(new_df['customers_affected'], new_df['duration_minutes'], color='blue', s=5, alpha=0.1)
+
+plt.title('Count of Customers Affected vs. Outage Duration')
+plt.xlabel('Count of Customers Affected')
+plt.ylabel('Outage Duration (minutes)')
+plt.show()
+
 ```
