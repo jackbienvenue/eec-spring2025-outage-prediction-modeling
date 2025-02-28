@@ -18,7 +18,10 @@ outages = pd.read_csv("../data/outage_data.csv")
 grid_cells = gpd.read_file("../data/grid_cell_shapefile") 
 ```
 
-Let's consider some model types to use and implement them:
-1. 
+Let's consider some model types to use and implement them. Let's move from basic to advanced:
+
+1. Poisson/negative binomial with 5-fold cross validation, 
 2. 
 3. 
+
+To start with a basic approach, let's consider al
