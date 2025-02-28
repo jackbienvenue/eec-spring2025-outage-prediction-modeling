@@ -15,6 +15,9 @@ Thumbs.db
 *.exe
 *.o
 *.so
+*.html
+**/*_files/
+
 
 # LaTeX
 *.log
