@@ -70,7 +70,13 @@ In the figure above, you can see the correlation (standardized from covaraince f
 
 ### How to Evaluate Stationarity Assumptions for your ROI:
 
-FILL IN STEPS HERE!
+1. Ensure that the grid cell shapefile for your ROI has been constructed as illustrated in the *Data Cleaning & Processing* section above.
+2. Ensure that a directory exists containing the aggregated daily data for your ROI as illustrated in the *Data Cleaning & Processing* section above.
+3. Use *visualization/spatial_correlation_mapping.qmd* to create figures to view
+
+Note that the scale of correlation between drivers defaults to a range of -0.5 to 0.5 for best visual inspection in the case studied. Since correlation ranges from -1 to 1, you may have to change the range to accomodate for visualizations including stronger correlations. 
+
+Visually inspect the outputs, and observe whether the values tend to be approximately stationary, or if there is reason for concern for a stationarity assumption. Reasons for concern include ranges of correlations which are on both sides of 0, very large variations in the correlations, or relatively strong apparent clustering or dispersion. 
 
 ---
 
