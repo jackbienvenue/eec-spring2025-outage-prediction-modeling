@@ -18,6 +18,10 @@ UConn Eversource Energy Center - analysis of independence of weather variables t
         }
     </style>
 </head>
+<body>
+    <img src="images/Rain_over_water_Unsplash.jpg" alt="Rain over water">
+</body>
+</html>
 
 Since the data processing for analysis is comprised of many stages, let's walk through these.
 
