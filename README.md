@@ -1,27 +1,9 @@
 # Weather Driver Independence Evaluation
 UConn Eversource Energy Center - analysis of independence of weather variables to assess validity of driver independence assumption in outage forecasting reports.
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centered Image</title>
-    <style>
-        body {
-            text-align: center; /* This centers the content horizontally */
-            margin: 0;
-            padding: 0;
-        }
-        img {
-            width: 30%; /* Makes the image 30% of its original size */
-            display: block; /* Ensures the image is treated as a block element */
-            margin: 0 auto; /* Centers the image horizontally */
-        }
-    </style>
-</head>
-<body>
-    <img src="images/Rain_over_water_Unsplash.jpg" alt="Rain over water">
-</body>
-</html>
+<p align="center">
+  <img src="images/Rain_over_water_Unsplash.jpg" width="30%">
+</p>
 
 Since the data processing for analysis is comprised of many stages, let's walk through these.
 
