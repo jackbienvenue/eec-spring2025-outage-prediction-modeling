@@ -89,7 +89,57 @@ plt.title('Count of Customers Affected vs. Outage Duration')
 plt.xlabel('Count of Customers Affected')
 plt.ylabel('Outage Duration (minutes)')
 plt.show()
-
 ```
 
 It looks as though it will be very challenging to establish a meaningful relationship between outage duration and the count of customers affected directly.
+
+---------------------------
+
+What happens when we try to take out single-customer outages from the dataset and then transform to the Gaussian space?
+
+Note that we would rationalize removing the single-customer outages by assuming that single customer outages happen because of events that are spurious and not necessarily related to weather. (This assumption may not be true in all cases)
+
+``` {python}
+over_1_cust_outages = df[df['customers_affected'] > 1]
+
+# Now, let's make an untransformed histogram:
+
+plt.figure(figsize=(10, 6))
+
+# Step 2: Create a histogram of 'customers_affected'
+plt.hist(over_1_cust_outages['customers_affected'], bins=50, color='skyblue', edgecolor='black', range=(0, 50))
+
+# Step 3: Formatting the plot
+plt.title('Frequency Plot of Number of Customers Affected (artificially small range)', fontsize=14)
+plt.xlabel('Customers Affected', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+
+# Step 4: Show the plot
+plt.tight_layout()
+plt.show()
+
+# And a log-transformed histogram:
+
+plt.hist(np.log(over_1_cust_outages['customers_affected']), bins=20, color='skyblue', edgecolor='black')
+plt.title('Log-Transformed Frequency Plot of Customers Affected')
+plt.xlabel('Log(Customers Affected)')
+plt.ylabel('Frequency')
+plt.show()
+```
+
+So, it looks as though we are really working with heavy-tailed data and we will consider modeling this data as approximately Pareto distributed. Let's evaluate how a transformation would fit to a normal distribution:
+
+```{python}
+# Create X as a vector of outage counts:
+X = over_1_cust_outages['customers_affected']
+
+from scipy import stats
+prob=stats.probplot(X,dist=stats.norm,plot=plt)
+plt.show()
+
+# Transform 
+
+new_X,lamb=stats.boxcox(X)
+prob=stats.probplot(new_X,dist=stats.norm,plot=plt)
+plt.show()
+```
