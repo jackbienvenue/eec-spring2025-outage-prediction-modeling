@@ -143,3 +143,23 @@ new_X,lamb=stats.boxcox(X)
 prob=stats.probplot(new_X,dist=stats.norm,plot=plt)
 plt.show()
 ```
+
+Inverse Hyperbolic Sine transformation attempt:
+
+```{python}
+asinh_X = np.arcsinh(X)
+prob=stats.probplot(asinh_X,dist=stats.norm,plot=plt)
+plt.show()
+```
+
+This looks promising, perhaps we can find a second transformation which will allow us to smooth out the issue caused by the low-end values.
+
+First, let's plot the histogram:
+
+``` {python}
+plt.hist(asinh_X, bins=20, color='skyblue', edgecolor='black')
+plt.title('asinh-Transformed Frequency Plot of Customers Affected')
+plt.xlabel('asinh(Customers Affected)')
+plt.ylabel('Frequency')
+plt.show()
+```
