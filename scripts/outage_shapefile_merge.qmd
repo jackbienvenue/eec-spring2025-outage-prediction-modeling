@@ -31,6 +31,8 @@ outage_gdf = gpd.GeoDataFrame(outage_df,
 joined_gdf = gpd.sjoin(outage_gdf, grid_cells, how="left", predicate="within")
 
 print(joined_gdf.head())
+
+joined_gdf.to_file('../data/outage_shapefile_merge/outage_shapefile_merge.shp')
 ```
 
 Now that we have created the new geodataframe associated each outage with a grid cell, let's map it out to confirm that we are experiencing the intended effects:
