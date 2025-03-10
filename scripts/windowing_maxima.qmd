@@ -8,3 +8,27 @@ When constructing the outage prediction model, we make the assumption that outag
 
 Outage events are sorted into individual days. For storm events, the distinction of days is arbitrary. This file introduces a method for windowing a 24-hour period before and after an outage event is recorded (for a 48 hour window) and identifying the maximum values for drivers.
 
+``` {python}
+#| echo: false
+
+# Package Import
+import pandas as pd
+import geopandas as gpd
+
+# Data Import
+
+gdf = gpd.read_file('../data/outage_shapefile_merge/outage_shapefile_merge.shp')
+
+gdf = gdf.rename(columns={'customers_': 'customers_affected', 'duration_m': 'duration_minutes', 'index_righ': 'index_right'}) # Correct buggy names from export
+
+outage_gdf = gdf[gdf['customers_affected'] > 1] # Remove "fluke" events
+
+```
+
+
+
+``` {python}
+
+
+```
+
