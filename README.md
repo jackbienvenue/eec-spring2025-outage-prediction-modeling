@@ -84,6 +84,22 @@ Visually inspect the outputs, and observe whether the values tend to be approxim
 
 # Modeling Outages
 
+
+## Collecting necessary data
+
+Data:
+- CSV of outage events with columns:
+  - customers_affected (count data)
+  - longitude
+  - latitude
+  - datetime
+  - duration_minutes
+- Shapefile of grid cells
+
+Begin by merging the outage data with the shapefiles using scripts/outage_shapefile_merge.qmd.
+
+Continue onto scripts/windowing_maxima.qmd.
+
 ---
 
 ---
