@@ -1,0 +1,10 @@
+---
+author: Jack Bienvenue
+title: Windowing for Driver Maximization
+
+---
+
+When constructing the outage prediction model, we make the assumption that outages are caused primarily by high intensity drivers causing disruptions which lead to outages. 
+
+Outage events are sorted into individual days. For storm events, the distinction of days is arbitrary. This file introduces a method for windowing a 24-hour period before and after an outage event is recorded (for a 48 hour window) and identifying the maximum values for drivers.
+
