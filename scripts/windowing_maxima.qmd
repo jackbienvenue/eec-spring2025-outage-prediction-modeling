@@ -25,10 +25,21 @@ outage_gdf = gdf[gdf['customers_affected'] > 1] # Remove "fluke" events
 
 ```
 
-
+Define windows for events:
 
 ``` {python}
+gdf['datetime'] = pd.to_datetime(gdf['datetime'], errors='coerce')
 
+gdf['rounded_datetime'] = gdf['datetime'].dt.round('h') 
+
+gdf['24_hours_prior'] = gdf['rounded_datetime'] - pd.Timedelta(hours=24) 
+
+gdf['24_hours_after'] = gdf['rounded_datetime'] + pd.Timedelta(hours=24) 
+```
+
+Define 24 increment-days for each event:
+
+``` {python}
 
 ```
 
