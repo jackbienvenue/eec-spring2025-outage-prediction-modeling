@@ -1,0 +1,31 @@
+---
+author: Jack Bienvenue
+date: 12 March 2025
+format: html
+---
+
+In this file, we want to evaluate whether UI (United Illuminating) towns are underrepresented in our datasets:
+
+``` {python}
+import pandas as pd
+
+df = pd.read_csv("../data/outages_per_town_CT.csv")
+```
+
+Let's check Vernon, a ~45,000 population town in the Eversource area:
+
+``` {python}
+vernon_df = df[df["town"] == "Vernon"]
+
+vernon_df_outages_count = sum(vernon_df['customers_affected'])
+print(vernon_df_outages_count)
+```
+
+Now, let's check Wallingford, a ~45,000 population town in the UI area:
+
+``` {python}
+wallingford_df = df[df["town"] == "Wallingford"]
+
+wallingford_df_outages_count = sum(wallingford_df['customers_affected'])
+print(wallingford_df_outages_count)
+```
