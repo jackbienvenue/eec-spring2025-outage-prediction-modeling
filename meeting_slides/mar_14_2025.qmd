@@ -1,4 +1,31 @@
 ---
-author: Jack Bienvenue
-title: Meeting 
+title: "EEC Advising Meeting"
+subtitle: "Jack Bienvenue, Dr. Stergios Emmanouil"
+date: "March 14, 2025"
+format: revealjs
+revealjs-theme: "simple" 
+revealjs-transition: "fade" 
+highlight-style: "github"  
+slide-number: true 
 ---
+
+## Organization
+
+<p align="center">
+  <img src="../images/data_cleaning_process_flow_diagram.png" width="100%">
+</p>
+
+## Progress Updates
+
+
+
+## Progress, continued
+
+
+
+## Near-term Plans
+
+
+
+## Questions
+
