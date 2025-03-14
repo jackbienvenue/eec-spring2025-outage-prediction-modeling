@@ -38,6 +38,10 @@ The scripts in this repository are written using **Quarto**, an free software wh
 
 # Data Cleaning & Processing:
 
+<p align="center">
+  <img src="images/data_cleaning_process_flow_diagram.png" width="100%">
+</p>
+
 Since the data processing for analysis is comprised of many stages, let's walk through these.
 
 **The GRIB files provided from ECMWF are time series of weather data for whole geographic areas, which are comprised on rectangular (spherically projected because of the surface of the Earth) grid cells. We want to:**
