@@ -5,6 +5,8 @@ format: html
 date: 11 March 2025
 ---
 
+# Introduction 
+
 When constructing the outage prediction model, we make the assumption that outages are caused primarily by high intensity drivers causing disruptions which lead to outages. 
 
 Outage events are sorted into individual days. For storm events, the distinction of days is arbitrary. This file introduces a method for windowing a 24-hour period before and after an outage event is recorded (for a 48 hour window) and identifying the maximum values for drivers.
@@ -18,67 +20,90 @@ import folium
 
 Begin with the shapefile of municipalities for Connecticut. (Here, it is fabricated using a shapefile of CT and the set of Northeast towns)
 
+# Data Preparation
+
 ``` {python}
 #| echo: false
 
-# Step 1: Load the shapefiles
+# Step 1: Load northeast towns, ct boundary shapefile
 towns_gdf = gpd.read_file('../data/northeast_towns_shapefile/Northeast_Town_Polygon.shp')
 ct_gdf = gpd.read_file('../data/ct_shapefile/Connecticut_Poly.shp')
 
-# Step 2: Ensure both GeoDataFrames are in the same CRS (Coordinate Reference System)
-# This is important for the intersection to work correctly
+# Step 2: Put shapefiles in the same CRS (if they are not already)
 towns_gdf = towns_gdf.to_crs(ct_gdf.crs)
 
-# Step 3: Perform the intersection to get towns in Connecticut
+# Step 3: Perform the intersection, getting CT towns
 ct_towns_gdf = gpd.overlay(towns_gdf, ct_gdf, how='intersection')
 
-# Step 4: Optionally, save the result to a new shapefile or visualize it
-ct_towns_gdf.to_file('ct_towns.shp')
+# Step 4: save result
+ct_towns_gdf.to_file('../data/ct_towns/ct_towns.shp')
 
-# Optionally, visualize the result
+# Plot to confirm
 ct_towns_gdf.plot()
 
+print("fields:", ct_towns_gdf.columns)
+print(ct_towns_gdf)
 ```
+
+# Function Construction
 
 ``` {python}
 #| eval: false
 
 # Data Import
 
-gdf = gpd.read_file('../data/outage_shapefile_merge/outage_shapefile_merge.shp')
+def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_data = "../data/town_outages.csv", weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs", ):
 
-gdf = gdf.rename(columns={'customers_': 'customers_affected', 'duration_m': 'duration_minutes', 'index_righ': 'index_right'}) # Correct buggy names from export
+    '''
+    This function...
 
-outage_gdf = gdf[gdf['customers_affected'] > 1] # Remove "fluke" events
+    ARGUMENTS:
 
-## IDENTIFY HOME DIRECTORY FOR HOURLY GRID CELL WEATHER:
+    town_shapefile - the argument takes the town shapefile as an input as a spatial merging field
 
-grid_cell_hourly_weather_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs"
+    outage_data - the csv file holding information about outages events by town
+
+    weather_data_dir - The directory which is home to HOURLY csv time series of weather data
+
+    '''
+
+#####-----   FUNCTION PHASE 1: READ IN DATA, MERGE TOWNS TO GRID CELLS   -----#####
+
+    # READ IN SHAPEFILE
+    gdf = gpd.read_file('../data/outage_shapefile_merge/outage_shapefile_merge.shp')
+
+    gdf = gdf.rename(columns={'customers_': 'customers_affected',
+        'duration_m': 'duration_minutes', 
+        'index_righ': 'index_right'}) # Correct buggy names from export
+
+    outage_gdf = gdf[gdf['customers_affected'] > 1] # Remove "fluke" events
+
+    ## IDENTIFY HOME DIRECTORY FOR HOURLY GRID CELL WEATHER:
+
+    grid_cell_hourly_weather_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs"
+
+    # Define windows for events:
+
+    gdf['datetime'] = pd.to_datetime(gdf['datetime'], errors='coerce')
+
+    gdf['rounded_datetime'] = gdf['datetime'].dt.round('h') 
+
+    gdf['24_hours_prior'] = gdf['rounded_datetime'] - pd.Timedelta(hours=24) 
+
+    gdf['24_hours_after'] = gdf['rounded_datetime'] + pd.Timedelta(hours=24) 
+
+    # Define 24 increment-days for each event:
+
+    for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
+
+        for pseudo-day in range(0,23):
+
+            start time += pd.Timedelta(hours=1)
 
 
-# Define windows for events:
+    return 
 
-
-gdf['datetime'] = pd.to_datetime(gdf['datetime'], errors='coerce')
-
-gdf['rounded_datetime'] = gdf['datetime'].dt.round('h') 
-
-gdf['24_hours_prior'] = gdf['rounded_datetime'] - pd.Timedelta(hours=24) 
-
-gdf['24_hours_after'] = gdf['rounded_datetime'] + pd.Timedelta(hours=24) 
-
-# Define 24 increment-days for each event:
-
-for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
-
-    for pseudo-day in range(0,23):
-
-        start time += pd.Timedelta(hours=1)
-
-
-        
-
-## I'll need to come up with a protocol to associate each event with a grid cell (and more importantly, to a merged_csv to retrieve data.) 
+    ## I'll need to come up with a protocol to associate each event with a grid cell (and more importantly, to a merged_csv to retrieve data.) 
 
 ```
 
