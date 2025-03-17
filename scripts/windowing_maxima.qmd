@@ -16,6 +16,7 @@ Outage events are sorted into individual days. For storm events, the distinction
 import pandas as pd
 import geopandas as gpd
 import folium
+import matplotlib.pyplot as plt
 ```
 
 Begin with the shapefile of municipalities for Connecticut. (Here, it is fabricated using a shapefile of CT and the set of Northeast towns)
@@ -40,9 +41,6 @@ ct_towns_gdf.to_file('../data/ct_towns/ct_towns.shp')
 
 # Plot to confirm
 ct_towns_gdf.plot()
-
-print("fields:", ct_towns_gdf.columns)
-print(ct_towns_gdf)
 ```
 
 # Function Construction
@@ -52,7 +50,7 @@ print(ct_towns_gdf)
 
 # Data Import
 
-def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_data = "../data/town_outages.csv", weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs", ):
+def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_data = "../data/town_outages.csv", weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs", grid_cell_shapefile = "../data/grid_cell_shapefile/grid_cells.shp"):
 
     '''
     This function...
@@ -71,15 +69,22 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_da
 
     weather_data_dir - The directory which is home to HOURLY csv time series of weather data
 
+    grid_cell_shapefile - the relative path to the shapefile containing the grid cells for the state of interest
+
     '''
 
 #####-----   FUNCTION PHASE 1: READ IN DATA, MERGE GRID CELLS TO TOWNS    -----#####
 
-    # Phase 1.1: READ IN SHAPEFILE
+    # Phase 1.1: READ IN SHAPEFILE FOR CT TOWNS, GRID CELLS
+
+    ct_towns_shp = town_shapefile # from arg
+    grid_cells_shp = grid_cell_shapefile # from arg
+
+    # Phase 1.2: READ IN OUTAGE DATA
 
     gdf = gpd.read_file(outage_data)
 
-    # Phase 1.2: Define windows for events:
+    # Phase 1.3: Define windows for events:
 
         ### FOR SPEED OF DEVELOPMENT:
 
@@ -87,24 +92,99 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_da
 
         ### -------DELETE LATER---------
 
+    ## Remove extraneous "+00:00" timezone correction upon datetime transformation
     gdf['storm_start_datetime'] = pd.to_datetime(gdf['storm_start_datetime']).dt.tz_convert(None)
 
+    ## Create day-before threshold
     gdf['24_hours_prior'] = gdf['storm_start_datetime'] - pd.Timedelta(hours=24) 
 
+    ## Create dat-after threshold
     gdf['24_hours_after'] = gdf['storm_start_datetime'] + pd.Timedelta(hours=24) 
 
-    return gdf
+    # Phase 1.4: Merge Grid Cells to match towns on grid cell centroid 
+    # to town intersection:
+
+    ## Define gdf for ct towns
+    ct_towns_gdf = gpd.read_file(ct_towns_shp)
+
+    ## Filter towns to make sure extraneous rows are removed
+    ct_towns_gdf = ct_towns_gdf[
+        (ct_towns_gdf['STATE'] == 'Connecticut') & 
+        (ct_towns_gdf['STATE_COD'] == 'CT') & 
+        pd.notna(ct_towns_gdf['MAP_LABEL'])
+    ]
+    ct_towns_gdf.reset_index(inplace=True)
+
+    ## Further cleaning
+    ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI', 'TOWN_FIELD', 'LABEL_FLAG', 'CT_LEGEND', 'MA_LEGEND', 'ME_LEGEND', 'NH_LEGEND', 'NJ_LEGEND', 'NY_LEGEND', 'RI_LEGEND', 'VT_LEGEND', 'CT_LABEL_Y', 'CT_LABEL_N', 'LAND_CLASS', "CNTY_FIELD", "CNTY_COD", 'STATE_NAME', 'STATE_COD', 'MAP_LABEL', "index"])
+
+    ## Add centroid attribute to grid cells:
+
+    grid_cells_gdf = gpd.read_file(grid_cells_shp)
+    grid_cells_gdf['centroid'] = grid_cells_gdf['geometry'].centroid
+
+    ## Specify centroids as active geometry to allow join
+    grid_cells_gdf = grid_cells_gdf.set_geometry('centroid')
     
+    ## Project both to state plane (CT) for best results
+    grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
+    ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
+
+    ## Perform spatial join of towns and grid cells
+    joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, how="left", predicate="within")
+
+    joined_gc_towns = joined_gc_towns.dropna()
+
+    joined_gc_towns['centroid'] = joined_gc_towns['centroid'].to_crs(epsg=4326)
+
+    return joined_gc_towns
+
+
+    # Phase 1.5: Connect grid cell points to weather data:
+
+    ## Add lat & long columns
+
+    ## empty lists for lon, lat values
+    lon_values = []
+    lat_values = []
+
+    ## Iterate over each row in the GeoDataFrame
+    for index, row in joined_gc_towns.iterrows():
+        ## Access the centroid geometry
+        centroid_point = row['centroid']
+        
+        ## Extract longitude (x) and latitude (y)
+        lon_values.append(centroid_point.x)
+        lat_values.append(centroid_point.y)
+
+    ## Add the lon/lat as new columns to the gdf
+    joined_gc_towns['lon'] = joined_gc_towns['lon'].astype(str).str.replace('.', '_')
+    joined_gc_towns['lat'] = joined_gc_towns['lat'].astype(str).str.replace('.', '_')
+
+    ## Create a filename using latitude, longitude, and an index
+    gc_weather_file_pair = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
+
+    # Phase 1.5.1: Check matches to filenames
+
+    ## Replace dots in latitude and longitude with underscores
+    filename = filename.rsplit('.', 1)  # Split only on the last dot (the file extension)
+    filename[0] = filename[0].replace('.', '_')  # Replace dots in the main part of the filename
+
+    ## Join the filename back together
+    filename = '.'.join(filename)
+
+    ## Construct the full path for the CSV file
+    full_path = os.path.join(output_path, filename)
 
 #####-----   FUNCTION PHASE 1: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
 
     # Define 24 increment-days for each event:
 
-    for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
+    ###for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
 
-        for pseudo-day in range(0,23):
+        ###for pseudo_day in range(0,23):
 
-            start time += pd.Timedelta(hours=1)
+            ###start time += pd.Timedelta(hours=1)
 
 
     ###return 
@@ -113,8 +193,65 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_da
 
 ```
 
-
 ``` {python}
 result = windowing_maxima()
 print(result)
+```
+
+Diagnostics:
+```{python}
+#| eval: false
+#| echo: false
+grid_cells_gdf = gpd.read_file("../data/grid_cell_shapefile/grid_cells.shp")
+ct_towns_gdf = gpd.read_file("../data/ct_towns/ct_towns.shp")
+
+ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI', 'TOWN_FIELD', 'LABEL_FLAG', 'CT_LEGEND', 'MA_LEGEND', 'ME_LEGEND', 'NH_LEGEND', 'NJ_LEGEND', 'NY_LEGEND', 'RI_LEGEND', 'VT_LEGEND', 'CT_LABEL_Y', 'CT_LABEL_N', 'LAND_CLASS', "CNTY_FIELD", "CNTY_COD", 'STATE_NAME', 'STATE_COD', 'MAP_LABEL'])
+
+# Reproject both shapefiles to the Connecticut State Plane coordinate system (EPSG:26995)
+grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
+ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
+
+
+# Calculate centroids for grid cells
+grid_cells_gdf['centroid'] = grid_cells_gdf['geometry'].centroid
+
+# Set centroid as active geometry for the grid cells
+grid_cells_gdf = grid_cells_gdf.set_geometry('centroid')
+
+# Plotting the map
+fig, ax = plt.subplots(figsize=(10, 10))
+
+# Plot towns (polygons)
+ct_towns_gdf.plot(ax=ax, color='lightblue', edgecolor='black', alpha=0.5)
+
+# Plot grid cell centroids (points)
+grid_cells_gdf.plot(ax=ax, color='red', markersize=5, label='Centroids')
+
+# Add title and legend
+ax.set_title('Towns and Grid Cell Centroids', fontsize=16)
+ax.legend()
+
+# Show the plot
+plt.show()
+
+joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, how="left", predicate="within")
+
+joined_gc_towns = joined_gc_towns.dropna()
+
+print(joined_gc_towns)
+
+fig, ax = plt.subplots(figsize=(10, 10))
+
+# Plot the towns as polygons (light blue)
+ct_towns_gdf.plot(ax=ax, color='lightblue', edgecolor='black', alpha=0.5)
+
+# Plot the centroids from the 'centroid' column (red points)
+joined_gc_towns.plot(ax=ax, color='red', markersize=5, label='Grid Cell Centroids')
+
+# Add title and legend
+ax.set_title('Towns and Grid Cell Centroids', fontsize=16)
+ax.legend()
+
+# Show the plot
+plt.show()
 ```
