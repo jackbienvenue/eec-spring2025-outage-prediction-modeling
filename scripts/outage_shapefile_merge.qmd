@@ -7,6 +7,8 @@ format: html
 
 In this file, we will join the outage data spatially with the grid cells in order to associate outages with specific grid cells for spatial analysis.
 
+NOTE: THIS FILE MERGES OUTAGE DATA FROM THE outage_data.csv FILE, NOT FROM THE TOWN OUTAGES DATA.
+
 ``` {python}
 #| echo: false
 
