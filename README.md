@@ -32,6 +32,15 @@ The variables of interest beyond index data (time, latitude, longitude) to be ex
 
 The scripts in this repository are written using **Quarto**, an free software which allows for markdown-code cell development and various forms of outputs, like notebooks and presentations. Quarto can be downloaded [here](https://quarto.org/docs/get-started/) and runs on top of Jupyter for Python, the language of this project. 
 
+All package dependencies are listed in the requirements.txt file. Some of these include:
+
+- pandas
+- geopandas
+- numpy
+- folium
+- xarray
+- cfgrib
+
 -----
 
 -----
