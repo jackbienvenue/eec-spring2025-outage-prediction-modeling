@@ -187,12 +187,15 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 #####-----   FUNCTION PHASE 2: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
 
 '''
-Now, the grid cell centroids are all merged to towns
+Now, the grid cell centroids are all merged to towns, and we can match towns 
 '''
+
+    ## Rename gdf (town outages) for clarity:
+    town_outages = gdf
 
     # Define 24 increment-days for each event:
 
-    ###for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
+    for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
 
         ###for pseudo_day in range(0,23):
 
