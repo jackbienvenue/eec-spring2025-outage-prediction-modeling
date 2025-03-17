@@ -48,7 +48,7 @@ print(ct_towns_gdf)
 # Function Construction
 
 ``` {python}
-#| eval: false
+#| eval: true
 
 # Data Import
 
@@ -63,34 +63,40 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_da
 
     outage_data - the csv file holding information about outages events by town
 
+        Fields for outage_data file:
+            - town ("Town")
+            - storm_start_datetime ('YYYY-MM-DD HH:MM:SS+00:00')
+            - outages (count data)
+            - customers_affected (count data)
+
     weather_data_dir - The directory which is home to HOURLY csv time series of weather data
 
     '''
 
-#####-----   FUNCTION PHASE 1: READ IN DATA, MERGE TOWNS TO GRID CELLS   -----#####
+#####-----   FUNCTION PHASE 1: READ IN DATA, MERGE GRID CELLS TO TOWNS    -----#####
 
-    # READ IN SHAPEFILE
-    gdf = gpd.read_file('../data/outage_shapefile_merge/outage_shapefile_merge.shp')
+    # Phase 1.1: READ IN SHAPEFILE
 
-    gdf = gdf.rename(columns={'customers_': 'customers_affected',
-        'duration_m': 'duration_minutes', 
-        'index_righ': 'index_right'}) # Correct buggy names from export
+    gdf = gpd.read_file(outage_data)
 
-    outage_gdf = gdf[gdf['customers_affected'] > 1] # Remove "fluke" events
+    # Phase 1.2: Define windows for events:
 
-    ## IDENTIFY HOME DIRECTORY FOR HOURLY GRID CELL WEATHER:
+        ### FOR SPEED OF DEVELOPMENT:
 
-    grid_cell_hourly_weather_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs"
+    gdf = gdf.tail()
 
-    # Define windows for events:
+        ### -------DELETE LATER---------
 
-    gdf['datetime'] = pd.to_datetime(gdf['datetime'], errors='coerce')
+    gdf['storm_start_datetime'] = pd.to_datetime(gdf['storm_start_datetime']).dt.tz_convert(None)
 
-    gdf['rounded_datetime'] = gdf['datetime'].dt.round('h') 
+    gdf['24_hours_prior'] = gdf['storm_start_datetime'] - pd.Timedelta(hours=24) 
 
-    gdf['24_hours_prior'] = gdf['rounded_datetime'] - pd.Timedelta(hours=24) 
+    gdf['24_hours_after'] = gdf['storm_start_datetime'] + pd.Timedelta(hours=24) 
 
-    gdf['24_hours_after'] = gdf['rounded_datetime'] + pd.Timedelta(hours=24) 
+    return gdf
+    
+
+#####-----   FUNCTION PHASE 1: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
 
     # Define 24 increment-days for each event:
 
@@ -101,9 +107,14 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns/shp", outage_da
             start time += pd.Timedelta(hours=1)
 
 
-    return 
+    ###return 
 
     ## I'll need to come up with a protocol to associate each event with a grid cell (and more importantly, to a merged_csv to retrieve data.) 
 
 ```
 
+
+``` {python}
+result = windowing_maxima()
+print(result)
+```
