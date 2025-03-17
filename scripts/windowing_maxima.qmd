@@ -17,6 +17,7 @@ import pandas as pd
 import geopandas as gpd
 import folium
 import matplotlib.pyplot as plt
+import os
 ```
 
 Begin with the shapefile of municipalities for Connecticut. (Here, it is fabricated using a shapefile of CT and the set of Northeast towns)
@@ -137,9 +138,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     joined_gc_towns['centroid'] = joined_gc_towns['centroid'].to_crs(epsg=4326)
 
-    return joined_gc_towns
-
-
     # Phase 1.5: Connect grid cell points to weather data:
 
     ## Add lat & long columns
@@ -158,25 +156,39 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         lat_values.append(centroid_point.y)
 
     ## Add the lon/lat as new columns to the gdf
+
+    joined_gc_towns['lon'] = [round(lon, 5) for lon in lon_values]
+    joined_gc_towns['lat'] = [round(lat, 3) for lat in lat_values]
+
+    ## Change format for conformity to filenames
     joined_gc_towns['lon'] = joined_gc_towns['lon'].astype(str).str.replace('.', '_')
     joined_gc_towns['lat'] = joined_gc_towns['lat'].astype(str).str.replace('.', '_')
 
-    ## Create a filename using latitude, longitude, and an index
-    gc_weather_file_pair = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
+    ## Create blank list for candidate filenames
+    weather_filenames = []
 
-    # Phase 1.5.1: Check matches to filenames
+    for index, row in joined_gc_towns.iterrows():
+        # Access latitude and longitude values for the current row
+        lat = row['lat']
+        lon = row['lon']
+        
+        ## Create candidate filename using lat/long
+        gc_weather_file_pair = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
+        
+        # Check if the file exists in the target directory
+        file_path = os.path.join(weather_data_dir, gc_weather_file_pair) #target repo is weather_data_dir, specified as an argument
+        if os.path.exists(file_path):
+            # If the file exists, add it to the list
+            weather_filenames.append(gc_weather_file_pair)
+        else:
+            print(f"File not found: {gc_weather_file_pair}")
+            
 
-    ## Replace dots in latitude and longitude with underscores
-    filename = filename.rsplit('.', 1)  # Split only on the last dot (the file extension)
-    filename[0] = filename[0].replace('.', '_')  # Replace dots in the main part of the filename
+#####-----   FUNCTION PHASE 2: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
 
-    ## Join the filename back together
-    filename = '.'.join(filename)
-
-    ## Construct the full path for the CSV file
-    full_path = os.path.join(output_path, filename)
-
-#####-----   FUNCTION PHASE 1: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
+'''
+Now, the grid cell centroids are all merged to towns
+'''
 
     # Define 24 increment-days for each event:
 
@@ -185,7 +197,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         ###for pseudo_day in range(0,23):
 
             ###start time += pd.Timedelta(hours=1)
-
 
     ###return 
 
