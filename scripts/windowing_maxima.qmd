@@ -186,20 +186,45 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
 #####-----   FUNCTION PHASE 2: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
 
-'''
-Now, the grid cell centroids are all merged to towns, and we can match towns 
-'''
+    '''
+    Now, the grid cell centroids are all merged to towns, and we can match towns 
+    '''
 
     ## Rename gdf (town outages) for clarity:
     town_outages = gdf
 
+    # Identify and separate events
+
+        ## Note: The gdf contains an entry for each town each time it is
+        ## affected by an event. This means that we can collapse the 
+        ## entries with the same storm_start_time to be considered one 
+        ## event, and that we can extract which towns are affected by 
+        ## that event. Let's do this:
+
     # Define 24 increment-days for each event:
 
-    for event in enumerate(gdf): # Every event needs 24-pseudo days in 48-hr window
+    '''
+    for event in gdf.itertuples():  # Use itertuples for better performance
+        event_start_time = event.start_time  # Assuming 'start_time' is a column in gdf
+        event_end_time = event_start_time + pd.Timedelta(hours=48)  # 48-hour window
 
-        ###for pseudo_day in range(0,23):
+        # Iterate through pseudo-days (24 pseudo-days within the 48-hour window)
+        max_means = {}  # Dictionary to store the max mean for each variable
+        for pseudo_day in range(24):  # Loop through pseudo-days (0 to 23)
+            pseudo_day_start = event_start_time + pd.Timedelta(hours=pseudo_day)
+            pseudo_day_end = pseudo_day_start + pd.Timedelta(hours=24)  # 24-hour pseudo-day
 
-            ###start time += pd.Timedelta(hours=1)
+            # Filter the data for this pseudo-day (within the 48-hour window)
+            pseudo_day_data = gdf[(gdf['time'] >= pseudo_day_start) & (gdf['time'] < pseudo_day_end)]
+            
+            # Calculate the mean for each independent variable in this pseudo-day
+            means = pseudo_day_data[['var1', 'var2', 'var3']].mean()  # Assuming 'var1', 'var2', etc. are your independent variables
+            
+            # Store the maximum means for each variable
+            for var in means.index:
+                if var not in max_means or means[var] > max_means[var]:
+                    max_means[var] = means[var]
+    '''
 
     ###return 
 
