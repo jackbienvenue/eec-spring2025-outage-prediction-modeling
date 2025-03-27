@@ -9,7 +9,7 @@ date: 11 March 2025
 
 When constructing the outage prediction model, we make the assumption that outages are caused primarily by high intensity drivers causing disruptions which lead to outages. 
 
-Outage events are sorted into individual days. For storm events, the distinction of days is arbitrary. This file introduces a method for windowing a 24-hour period before and after an outage event is recorded (for a 48 hour window) and identifying the maximum values for drivers.
+Outage events are sorted into individual days. For storm events, the distinction of days is arbitrary. This file introduces a method for windowing a 24-hour period before and after an outage event is recorded (for a 48 hour window) and identifying the maximum mean daily values for drivers within the 24 fabricated "pseudo-days" which can be formed by incrementing 24 hour periods hourly within the 48 hour window.
 
 ``` {python}
 # Package Import
@@ -140,6 +140,12 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     # Phase 1.5: Connect grid cell points to weather data:
 
+    '''
+    NOTE: The lon and lat columns added to joined_gc_towns in this 
+    section are geocodes for GRID CELL CENTROIDS, which are identifiers
+    that are used in the filenames for the grid cell weather data
+    '''
+
     ## Add lat & long columns
 
     ## empty lists for lon, lat values
@@ -192,6 +198,9 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     ## Rename gdf (town outages) for clarity:
     town_outages = gdf
+
+    print(town_outages) # Refresher on what we have for data
+    print(joined_gc_towns)
 
     # Identify and separate events
 
