@@ -199,16 +199,22 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     ## Rename gdf (town outages) for clarity:
     town_outages = gdf
 
-    print(town_outages) # Refresher on what we have for data
-    print(joined_gc_towns)
+    #print(town_outages) # Refresher on what we have for data
+    #print(joined_gc_towns) ##### DELETE LATER
 
     # Identify and separate events
 
         ## Note: The gdf contains an entry for each town each time it is
         ## affected by an event. This means that we can collapse the 
-        ## entries with the same storm_start_time to be considered one 
-        ## event, and that we can extract which towns are affected by 
-        ## that event. Let's do this:
+        ## entries with the same storm_start_date time to be considered  
+        ## one event, and that we can extract which towns are affected 
+        ## by that event. Let's do this:
+
+    town_outages['storm_start_datetime'] = pd.to_datetime(town_outages['storm_start_datetime']) # Ensure datetime format here
+
+    collapsed_data = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
+    collapsed_data.rename(columns={'town': 'towns_affected'}, inplace=True)
+    print(collapsed_data)
 
     # Define 24 increment-days for each event:
 
