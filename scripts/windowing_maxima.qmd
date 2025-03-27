@@ -199,8 +199,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     ## Rename gdf (town outages) for clarity:
     town_outages = gdf
 
-    #print(town_outages) # Refresher on what we have for data
-    #print(joined_gc_towns) ##### DELETE LATER
+    print(town_outages) # Refresher on what we have for data
+    print(joined_gc_towns) ##### DELETE LATER
 
     # Identify and separate events
 
@@ -241,7 +241,12 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
                     max_means[var] = means[var]
     '''
 
-    ###return 
+#####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
+
+    # driver_maximized_events = 
+
+    # driver_maximized_events.to_csv('../data/driver_maximized_events.csv')
+    #return driver_maximized_events
 
     ## I'll need to come up with a protocol to associate each event with a grid cell (and more importantly, to a merged_csv to retrieve data.) 
 
