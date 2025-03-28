@@ -212,34 +212,81 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     town_outages['storm_start_datetime'] = pd.to_datetime(town_outages['storm_start_datetime']) # Ensure datetime format here
 
-    collapsed_data = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
-    collapsed_data.rename(columns={'town': 'towns_affected'}, inplace=True)
-    print(collapsed_data)
+    event_df = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
+    event_df.rename(columns={'town': 'towns_affected'}, inplace=True)
+    print(event_df)
 
-    # Define 24 increment-days for each event:
+    ### PHASE 2.1: Function for weather data retrieval:
 
+    def weather_data_retrieval(gc_file_name, datetime):
+
+        '''
+        This function is designed for the iteration process of taking events and 
+        finding maximum values for weather data. It will be used later on in phase 2.2
+        to retrieve weather data for events. 
+
+        ARGUMENTS:
+        gc_file_name - the file name for the merged grid cell which corresponds to the town that we are retrieving data for. This will be generated later in the code
+        iteratively and be fed into this function.
+        datetime - the time of the event
+        '''
+
+        for event in gdf.itertuples():  # Use itertuples for better performance
+            event_start_time = event.start_time  # Assuming 'start_time' is a column in gdf
+            event_end_time = event_start_time + pd.Timedelta(hours=48)  # 48-hour window
+
+            # Iterate through pseudo-days (24 pseudo-days within the 48-hour window)
+            max_means = {}  # Dictionary to store the max mean for each variable
+            for pseudo_day in range(24):  # Loop through pseudo-days (0 to 23)
+                pseudo_day_start = event_start_time + pd.Timedelta(hours=pseudo_day)
+                pseudo_day_end = pseudo_day_start + pd.Timedelta(hours=24)  # 24-hour pseudo-day
+
+                # Filter the data for this pseudo-day (within the 48-hour window)
+                pseudo_day_data = gdf[(gdf['time'] >= pseudo_day_start) & (gdf['time'] < pseudo_day_end)]
+                
+                # Calculate the mean for each independent variable in this pseudo-day
+                means = pseudo_day_data[['var1', 'var2', 'var3']].mean() 
+                
+                # Store the maximum means for each variable
+                for var in means.index:
+                    if var not in max_means or means[var] > max_means[var]:
+                        max_means[var] = means[var]
+            return 
+
+
+    ### PHASE 2.2: TO BE EDITED LATER. EXECUTION OF WEATHER DATA RETRIEVAL ###
+
+    ''' 
+        This section will allow us to create the framework for connecting
+        the events to weather data. 
+
+        It will start by doing this relatively naively, by only connecting
+        to weather data for the one grid cell associated with the first 
+        alphabetically listed town in the set of towns affected by the event. 
+
+        Later, this can be adapted to be made more robust by maximizing
+        across the group of grid cells associated with all towns listed or 
+        through some other means.
     '''
-    for event in gdf.itertuples():  # Use itertuples for better performance
-        event_start_time = event.start_time  # Assuming 'start_time' is a column in gdf
-        event_end_time = event_start_time + pd.Timedelta(hours=48)  # 48-hour window
 
-        # Iterate through pseudo-days (24 pseudo-days within the 48-hour window)
-        max_means = {}  # Dictionary to store the max mean for each variable
-        for pseudo_day in range(24):  # Loop through pseudo-days (0 to 23)
-            pseudo_day_start = event_start_time + pd.Timedelta(hours=pseudo_day)
-            pseudo_day_end = pseudo_day_start + pd.Timedelta(hours=24)  # 24-hour pseudo-day
+    # Iterate through events to initiate the process of matching event to grid cell
+    for event in event_df.iterrows:
 
-            # Filter the data for this pseudo-day (within the 48-hour window)
-            pseudo_day_data = gdf[(gdf['time'] >= pseudo_day_start) & (gdf['time'] < pseudo_day_end)]
-            
-            # Calculate the mean for each independent variable in this pseudo-day
-            means = pseudo_day_data[['var1', 'var2', 'var3']].mean()  # Assuming 'var1', 'var2', etc. are your independent variables
-            
-            # Store the maximum means for each variable
-            for var in means.index:
-                if var not in max_means or means[var] > max_means[var]:
-                    max_means[var] = means[var]
-    '''
+        # Find alphabetically first town listed and remove it
+        town = event_df['towns_affected'].apply(lambda x: x.split(',')[0])
+
+        # Check if we find a match for the town name
+
+        if town in town_outages['town'].values:
+            # If we do, extract grid cell centroid 
+            centroid = town_outages[town_outages['town'] == town]['centroid'].values[0]
+
+            # Now, begin to retrieve windowed weather data:
+
+
+        else:
+            # If not, report that we cannot
+            print("Town not found in town_outages")
 
 #####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
 
