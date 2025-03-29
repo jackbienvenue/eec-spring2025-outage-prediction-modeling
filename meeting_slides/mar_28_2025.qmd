@@ -1,7 +1,7 @@
 ---
 title: "EEC Advising Meeting"
-subtitle: "Jack Bienvenue, Dr. Stergios Emmanouil, Dr. Manos Anagnostou"
-date: "February 14, 2025"
+subtitle: "Jack Bienvenue, Dr. Stergios Emmanouil"
+date: "March 28, 2025"
 format: revealjs
 revealjs-theme: "simple" 
 revealjs-transition: "fade" 
@@ -9,58 +9,35 @@ highlight-style: "github"
 slide-number: true 
 ---
 
-## Organization
+## Project Repository
 
-Materials for the internship are hosted on Github:
+- [https://github.com/jackbienvenue/eec-spring2025-outage-prediction-modeling](https://github.com/jackbienvenue/eec-spring2025-outage-prediction-modeling)
 
-- [https://github.com/jackbienvenue/weather-driver-independence-evaluation](https://github.com/jackbienvenue/weather-driver-independence-evaluation)
-- Scripts are publicly available, feel free to share
+## Data Process Organization
+
+![](images/data_cleaning_process_flow_diagram.png)
 
 ## Progress
 
-- Developed function to automatically process desired subsets of *.GRIB* into grid-cell specific CSVs
+- Established validation of stationarity assumption for drivers
+- Source code documentation, annotation
+- Established mechanism to retrieve grid cell data for each town
+    - Intersects town centroid with grid cell, uses that grid cell
+- Construction of logic for windowing function
 
-``` {python}
-#| echo: true
-#| eval: false
 
-grib_folder_processing(earliest_file, latest_file, 
-    input_directory, output_directory_path, hourly=False)
+## Updates
 
-'''
-earliest_file - the EARLIEST chronological file
+Viable transformation is hard to identify:
 
-latest_file - the LATEST chronological file
-
-input_directory - input directory which hosts the files
-
-output_directory_path - output path for the NEW directory that 
-    is meant to store the new, grid-cell-specific CSVs
-
-hourly - whether or not to export data at an hourly resolution
-'''
-```
-
-## Progress, continued
-
-- Created aggregation functions 
-- Learned to make animated map of variables for grid cells over time
-    - Potentially useful for observing seasonal variations in the covariance of drivers
-- Created script to build grid cells
-- Started script for covariance calculations
-
+[See here for some visualizations.](file:///Users/jackbienvenuejr/Desktop/EEC_Work/eec-spring2025-outage-prediction-modeling/visualization/outage_graphing.html)
 
 ## Near-term Plans
 
-- Process larger subsets of *.GRIB* files
-    - *.GRIB* --> hourly CSV --> Aggregated CSV
-- Calculate covariance of drivers for each grid cells
-- Observe distribution of each type covariance over all grid cells
-- Visualize each covariance relationship over grid cells
+- Complete windowing function 
+- Process windowed data for final model dataset
 
 ## Questions
 
-- Which aggregations are the most useful for drivers over a daily period?
-    - Wind speed: average, max, average of top quantile?
-- Are there particular visualizations I can make which can be useful to the project for reporting?
-- Refresh on project details & objectives
+- Confusion around windowing mechanism
+- 
