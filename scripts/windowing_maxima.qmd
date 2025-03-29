@@ -47,20 +47,25 @@ ct_towns_gdf.plot()
 # Function Construction
 
 ``` {python}
-#| eval: true
+#| eval: false
 
 # Data Import
 
-def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_data = "../data/town_outages.csv", weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs", grid_cell_shapefile = "../data/grid_cell_shapefile/grid_cells.shp"):
+def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", 
+    outage_data = "../data/town_outages.csv", 
+    weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs", 
+    grid_cell_shapefile = "../data/grid_cell_shapefile/grid_cells.shp"):
 
     '''
     This function...
 
     ARGUMENTS:
 
-    town_shapefile - the argument takes the town shapefile as an input as a spatial merging field
+    town_shapefile - the argument takes the town shapefile as an input 
+    as a spatial merging field
 
-    outage_data - the csv file holding information about outages events by town
+    outage_data - the csv file holding information about outages events 
+    by town
 
         Fields for outage_data file:
             - town ("Town")
@@ -68,9 +73,11 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
             - outages (count data)
             - customers_affected (count data)
 
-    weather_data_dir - The directory which is home to HOURLY csv time series of weather data
+    weather_data_dir - The directory which is home to HOURLY csv time 
+    series of weather data
 
-    grid_cell_shapefile - the relative path to the shapefile containing the grid cells for the state of interest
+    grid_cell_shapefile - the relative path to the shapefile containing 
+    the grid cells for the state of interest
 
     '''
 
@@ -94,13 +101,16 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         ### -------DELETE LATER---------
 
     ## Remove extraneous "+00:00" timezone correction upon datetime transformation
-    gdf['storm_start_datetime'] = pd.to_datetime(gdf['storm_start_datetime']).dt.tz_convert(None)
+    gdf['storm_start_datetime'] = pd.to_datetime(
+        gdf['storm_start_datetime']).dt.tz_convert(None)
 
     ## Create day-before threshold
-    gdf['24_hours_prior'] = gdf['storm_start_datetime'] - pd.Timedelta(hours=24) 
+    gdf['24_hours_prior'] = gdf['storm_start_datetime'] - 
+                            pd.Timedelta(hours=24) 
 
     ## Create dat-after threshold
-    gdf['24_hours_after'] = gdf['storm_start_datetime'] + pd.Timedelta(hours=24) 
+    gdf['24_hours_after'] = gdf['storm_start_datetime'] + 
+                            pd.Timedelta(hours=24) 
 
     # Phase 1.4: Merge Grid Cells to match towns on grid cell centroid 
     # to town intersection:
@@ -117,7 +127,11 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     ct_towns_gdf.reset_index(inplace=True)
 
     ## Further cleaning
-    ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI', 'TOWN_FIELD', 'LABEL_FLAG', 'CT_LEGEND', 'MA_LEGEND', 'ME_LEGEND', 'NH_LEGEND', 'NJ_LEGEND', 'NY_LEGEND', 'RI_LEGEND', 'VT_LEGEND', 'CT_LABEL_Y', 'CT_LABEL_N', 'LAND_CLASS', "CNTY_FIELD", "CNTY_COD", 'STATE_NAME', 'STATE_COD', 'MAP_LABEL', "index"])
+    ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI', 
+    'TOWN_FIELD', 'LABEL_FLAG', 'CT_LEGEND', 'MA_LEGEND', 'ME_LEGEND', 
+    'NH_LEGEND', 'NJ_LEGEND', 'NY_LEGEND', 'RI_LEGEND', 'VT_LEGEND', 
+    'CT_LABEL_Y', 'CT_LABEL_N', 'LAND_CLASS', "CNTY_FIELD", "CNTY_COD", 
+    'STATE_NAME', 'STATE_COD', 'MAP_LABEL', "index"])
 
     ## Add centroid attribute to grid cells:
 
@@ -132,7 +146,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
 
     ## Perform spatial join of towns and grid cells
-    joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, how="left", predicate="within")
+    joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, 
+                        how="left", predicate="within")
 
     joined_gc_towns = joined_gc_towns.dropna()
 
@@ -141,9 +156,10 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     # Phase 1.5: Connect grid cell points to weather data:
 
     '''
-    NOTE: The lon and lat columns added to joined_gc_towns in this 
-    section are geocodes for GRID CELL CENTROIDS, which are identifiers
-    that are used in the filenames for the grid cell weather data
+    NOTE: The lon and lat columns added to joined_gc_towns 
+    in this section are geocodes for GRID CELL CENTROIDS, 
+    which are identifiers that are used in the filenames 
+    for the grid cell weather data.
     '''
 
     ## Add lat & long columns
@@ -170,6 +186,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
     joined_gc_towns['lon'] = joined_gc_towns['lon'].astype(str).str.replace('.', '_')
     joined_gc_towns['lat'] = joined_gc_towns['lat'].astype(str).str.replace('.', '_')
 
+    # Phase 1.6: Build candidate filenames for weather data retrieval: 
+
     ## Create blank list for candidate filenames
     weather_filenames = []
 
@@ -182,15 +200,19 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         gc_weather_file_pair = f"lat_{lat}_lon_{lon}_time_series_weather.csv"
         
         # Check if the file exists in the target directory
-        file_path = os.path.join(weather_data_dir, gc_weather_file_pair) #target repo is weather_data_dir, specified as an argument
+        file_path = os.path.join(weather_data_dir, 
+            gc_weather_file_pair) #target repo is weather_data_dir, 
+                                  #specified as an argument
         if os.path.exists(file_path):
             # If the file exists, add it to the list
             weather_filenames.append(gc_weather_file_pair)
         else:
-            print(f"File not found: {gc_weather_file_pair}")
-            
+            weather_filenames.append('Not found')     
 
-#####-----   FUNCTION PHASE 2: USE WINDOWING TO MAXIMIZE DRIVER VALUES   -----#####
+    # Add the filenames to the dataframe for access later on
+    joined_gc_towns['filename'] = weather_filenames
+
+#####-----FUNCTION PHASE 2: USE WINDOWING TO MAXIMIZE DRIVER VALUES-----#####
 
     '''
     Now, the grid cell centroids are all merged to towns, and we can match towns 
@@ -198,9 +220,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     ## Rename gdf (town outages) for clarity:
     town_outages = gdf
-
-    print(town_outages) # Refresher on what we have for data
-    print(joined_gc_towns) ##### DELETE LATER
 
     # Identify and separate events
 
@@ -210,7 +229,9 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         ## one event, and that we can extract which towns are affected 
         ## by that event. Let's do this:
 
-    town_outages['storm_start_datetime'] = pd.to_datetime(town_outages['storm_start_datetime']) # Ensure datetime format here
+    # Confirm datetime formatting
+    town_outages['storm_start_datetime'] = pd.to_datetime(
+        town_outages['storm_start_datetime']) 
 
     event_df = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
     event_df.rename(columns={'town': 'towns_affected'}, inplace=True)
@@ -218,40 +239,51 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 
     ### PHASE 2.1: Function for weather data retrieval:
 
-    def weather_data_retrieval(gc_file_name, datetime):
+    def weather_data_retrieval(event, weather_data_dir = "/Volumes/JB_Fortress_L3/EEC/merged_csvs"):
 
         '''
-        This function is designed for the iteration process of taking events and 
-        finding maximum values for weather data. It will be used later on in phase 2.2
-        to retrieve weather data for events. 
+        This function will work within the event df iteration
+        process to allow us to succinctly retrieve weather data
+        for each event. 
+
+        NOTE: RIGHT NOW, BEFORE HEARING DECISION FROM STERGIOS
+        ON DATA PROCESSING TECHNIQUE, THIS FUNCTION SIMPLY
+        WILL RETRIEVE DATA FROM ONE GRID CELL, FROM THE 
+        ALPHABETICALLY FIRST LISTED TOWN ON THE AFFECTED TOWNS
+        LIST FOR AN EVENT. THIS IS ARBITRARY AND WILL BE CHANGED
+        LATER ON.
 
         ARGUMENTS:
-        gc_file_name - the file name for the merged grid cell which corresponds to the town that we are retrieving data for. This will be generated later in the code
-        iteratively and be fed into this function.
-        datetime - the time of the event
+        event -> input taken from each row of the events dataframe.
+        No need to specify this argument, this will be used later
+        implicitly.
+
+        weather_data_dir -> The directory in which the weather
+        data (at an hourly resolution) is stored. Defaults to my
+        own path, '/Volumes/JB_Fortress_L3/EEC/merged_csvs',
+        string input. 
         '''
 
-        for event in gdf.itertuples():  # Use itertuples for better performance
-            event_start_time = event.start_time  # Assuming 'start_time' is a column in gdf
-            event_end_time = event_start_time + pd.Timedelta(hours=48)  # 48-hour window
+        # Find the alphabetically-first town listed and extract it
+        town = event['towns_affected'].apply(lambda x: x.split(',')[0])
 
-            # Iterate through pseudo-days (24 pseudo-days within the 48-hour window)
-            max_means = {}  # Dictionary to store the max mean for each variable
-            for pseudo_day in range(24):  # Loop through pseudo-days (0 to 23)
-                pseudo_day_start = event_start_time + pd.Timedelta(hours=pseudo_day)
-                pseudo_day_end = pseudo_day_start + pd.Timedelta(hours=24)  # 24-hour pseudo-day
+        # Check if we find a match for the town name
+        if town in joined_gc_towns['town'].values:
 
-                # Filter the data for this pseudo-day (within the 48-hour window)
-                pseudo_day_data = gdf[(gdf['time'] >= pseudo_day_start) & (gdf['time'] < pseudo_day_end)]
-                
-                # Calculate the mean for each independent variable in this pseudo-day
-                means = pseudo_day_data[['var1', 'var2', 'var3']].mean() 
-                
-                # Store the maximum means for each variable
-                for var in means.index:
-                    if var not in max_means or means[var] > max_means[var]:
-                        max_means[var] = means[var]
-            return 
+            # If we do, extract target filename
+            filename = joined_gc_towns.loc[joined_gc_towns['town'] == town, 'filename'].iloc[0]
+
+            # After extracting filename, open file 
+
+                # Build file path
+            file_path = weather_data_dir.asstr + '/' + filename.asstr
+
+            weather_data = pd.read_csv(file_path)
+
+            
+        else:
+            # If not, report that we cannot
+            print("Town '{town}' not found in town_outages")
 
 
     ### PHASE 2.2: TO BE EDITED LATER. EXECUTION OF WEATHER DATA RETRIEVAL ###
@@ -269,25 +301,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
         through some other means.
     '''
 
-    # Iterate through events to initiate the process of matching event to grid cell
-    for event in event_df.iterrows:
-
-        # Find alphabetically first town listed and remove it
-        town = event_df['towns_affected'].apply(lambda x: x.split(',')[0])
-
-        # Check if we find a match for the town name
-
-        if town in town_outages['town'].values:
-            # If we do, extract grid cell centroid 
-            centroid = town_outages[town_outages['town'] == town]['centroid'].values[0]
-
-            # Now, begin to retrieve windowed weather data:
-
-
-        else:
-            # If not, report that we cannot
-            print("Town not found in town_outages")
-
 #####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
 
     # driver_maximized_events = 
@@ -300,10 +313,13 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp", outage_da
 ```
 
 ``` {python}
+#| eval: false
 result = windowing_maxima()
 print(result)
 ```
 
+
+------------------
 Diagnostics:
 ```{python}
 #| eval: false
