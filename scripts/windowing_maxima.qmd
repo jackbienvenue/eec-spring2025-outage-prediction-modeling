@@ -233,8 +233,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     event_df = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
     event_df.rename(columns={'town': 'towns_affected'}, inplace=True)
 
-    print(joined_gc_towns)
-    print(event_df)
+    #####print(joined_gc_towns)
+    #####print(event_df)
 
     ### PHASE 2.1: Function for weather data retrieval:
 
@@ -276,29 +276,62 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
                 # Build file path
             file_path = weather_data_dir.asstr + '/' + filename.asstr
 
+            # Read in relevant weather data
             weather_data = pd.read_csv(file_path)
 
-            window_maximizer_helper()
+            # Use the helper function to get maximum values
+            max_wind_velo, max_precip_intensity = window_maximizer_helper(weather_data=weather_data, storm_start_datetime=event['storm_start_datetime'])
+
+            event['max_wind_velo'] = max_wind_velo
+            event['max_precip_intensity'] = max_precip_intensity
 
         else:
-            # If not, report that we cannot
+            # If not, report that we cannot find the town
             print("Town '{town}' not found in town_outages")
+            event['max_wind_velo'] = None
+            event['max_precip_intensity'] = None
 
-    def window_maximizer_helper(storm_date_start)
+        return event
+
+    def window_maximizer_helper(weather_data, storm_start_datetime):
 
         # PRELIMINARIES:
+
         ## ID'ing window bounds:
+        ### Create day-before threshold
+        prior_25 = event_df['storm_start_datetime'] - pd.Timedelta(hours=25) 
+        '''
+        Why 25 hours here instead of 24? Precipiation is measured cumulatively
+        for each day in our dataset, so we need to extract an extra entry before
+        our first windowed hour (hour = -24:00:00 from storm start) so that we
+        can subtract the already-accumulated precipitation and convert the rest of
+        entries to allow list the hourly intensity.
+        '''
+        ### Create day-after threshold
+        after_24 = event_df['storm_start_datetime'] + pd.Timedelta(hours=24) 
 
-            ## Create day-before threshold
-        event_df['24_hours_prior'] = event_df['storm_start_datetime'] - pd.Timedelta(hours=24) 
+        ## Subset weather data to prior_24 -1 hour, after_24.
 
-        ## Create dat-after threshold
-        event_df['24_hours_after'] = event_df['storm_start_datetime'] + pd.Timedelta(hours=24) 
+        ### Ensure datetime format to begin
+        weather_data['time'] = pd.to_datetime(weather_data['time'])
+        event_df['storm_start_datetime'] = pd.to_datetime(event_df['storm_start_datetime'])
+
+        ### Perform subsetting
+        weather_event_subset = weather_data[(weather_data['time'] >= prior_25.iloc[0]) & 
+                                    (weather_data['time'] <= after_24.iloc[0])]
+
+        print(weather_event_subset)
 
         # DEFINING MAXIMUM WIND VELOCITY
 
+            #VECTORS!
+        
+        max_wind_velo = 1
+
         # DEFINING MAXIMUM PRECIPITATION INTENSITY
 
+            ## Special attention to cumulative nature of entries
+        max_precip_intensity = 1
 
 
         return max_wind_velo, max_precip_intensity
