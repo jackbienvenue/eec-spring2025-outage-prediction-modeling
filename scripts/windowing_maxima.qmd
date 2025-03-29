@@ -18,6 +18,11 @@ import geopandas as gpd
 import folium
 import matplotlib.pyplot as plt
 import os
+import warnings
+
+# After validating that these messsages do not apply for this script, suppress:
+warnings.filterwarnings("ignore", 
+    message="Geometry is in a geographic CRS. Results from 'centroid' are likely incorrect.")
 ```
 
 Begin with the shapefile of municipalities for Connecticut. (Here, it is fabricated using a shapefile of CT and the set of Northeast towns)
@@ -25,7 +30,7 @@ Begin with the shapefile of municipalities for Connecticut. (Here, it is fabrica
 # Data Preparation
 
 ``` {python}
-#| echo: false
+#| echo: true
 
 # Step 1: Load northeast towns, ct boundary shapefile
 towns_gdf = gpd.read_file('../data/northeast_towns_shapefile/Northeast_Town_Polygon.shp')
@@ -47,7 +52,7 @@ ct_towns_gdf.plot()
 # Function Construction
 
 ``` {python}
-#| eval: false
+#| eval: true
 
 # Data Import
 
@@ -103,14 +108,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     ## Remove extraneous "+00:00" timezone correction upon datetime transformation
     gdf['storm_start_datetime'] = pd.to_datetime(
         gdf['storm_start_datetime']).dt.tz_convert(None)
-
-    ## Create day-before threshold
-    gdf['24_hours_prior'] = gdf['storm_start_datetime'] - 
-                            pd.Timedelta(hours=24) 
-
-    ## Create dat-after threshold
-    gdf['24_hours_after'] = gdf['storm_start_datetime'] + 
-                            pd.Timedelta(hours=24) 
 
     # Phase 1.4: Merge Grid Cells to match towns on grid cell centroid 
     # to town intersection:
@@ -235,6 +232,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
     event_df = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
     event_df.rename(columns={'town': 'towns_affected'}, inplace=True)
+
+    print(joined_gc_towns)
     print(event_df)
 
     ### PHASE 2.1: Function for weather data retrieval:
@@ -268,23 +267,41 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         town = event['towns_affected'].apply(lambda x: x.split(',')[0])
 
         # Check if we find a match for the town name
-        if town in joined_gc_towns['town'].values:
+        if town in joined_gc_towns['TOWN_NAME'].values:
 
             # If we do, extract target filename
-            filename = joined_gc_towns.loc[joined_gc_towns['town'] == town, 'filename'].iloc[0]
+            filename = joined_gc_towns.loc[joined_gc_towns['TOWN_NAME'] == town, 'filename'].iloc[0]
 
             # After extracting filename, open file 
-
                 # Build file path
             file_path = weather_data_dir.asstr + '/' + filename.asstr
 
             weather_data = pd.read_csv(file_path)
 
-            
+            window_maximizer_helper()
+
         else:
             # If not, report that we cannot
             print("Town '{town}' not found in town_outages")
 
+    def window_maximizer_helper(storm_date_start)
+
+        # PRELIMINARIES:
+        ## ID'ing window bounds:
+
+            ## Create day-before threshold
+        event_df['24_hours_prior'] = event_df['storm_start_datetime'] - pd.Timedelta(hours=24) 
+
+        ## Create dat-after threshold
+        event_df['24_hours_after'] = event_df['storm_start_datetime'] + pd.Timedelta(hours=24) 
+
+        # DEFINING MAXIMUM WIND VELOCITY
+
+        # DEFINING MAXIMUM PRECIPITATION INTENSITY
+
+
+
+        return max_wind_velo, max_precip_intensity
 
     ### PHASE 2.2: TO BE EDITED LATER. EXECUTION OF WEATHER DATA RETRIEVAL ###
 
@@ -313,9 +330,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 ```
 
 ``` {python}
-#| eval: false
+#| eval: true
 result = windowing_maxima()
-print(result)
 ```
 
 
@@ -359,8 +375,6 @@ plt.show()
 joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, how="left", predicate="within")
 
 joined_gc_towns = joined_gc_towns.dropna()
-
-print(joined_gc_towns)
 
 fig, ax = plt.subplots(figsize=(10, 10))
 
