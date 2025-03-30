@@ -101,7 +101,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
         ### FOR SPEED OF DEVELOPMENT:
 
-    gdf = gdf.tail()
+    #####gdf = gdf.tail()
 
         ### -------DELETE LATER---------
 
@@ -230,11 +230,21 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     town_outages['storm_start_datetime'] = pd.to_datetime(
         town_outages['storm_start_datetime']) 
 
-    event_df = town_outages.groupby('storm_start_datetime')['town'].apply(lambda towns: ', '.join(towns)).reset_index()
-    event_df.rename(columns={'town': 'towns_affected'}, inplace=True)
+    # Confirm numeric types for to-be-summed vars:
+    town_outages['outages'] = pd.to_numeric(town_outages['outages'], errors='coerce')
+    town_outages['customers_affected'] = pd.to_numeric(town_outages['customers_affected'], errors='coerce')
 
-    #####print(joined_gc_towns)
-    #####print(event_df)
+
+    # Form event_df by grouping storms by the same start time
+    event_df = town_outages.groupby('storm_start_datetime').agg(
+        towns_affected=('town', lambda towns: ', '.join(towns)),   # Concatenate towns
+        outages=('outages', 'sum'),                       # Sum outages
+        customers_affected=('customers_affected', 'sum')  # Sum customers affected
+        ).reset_index()
+
+    #####print(joined_gc_towns, "\n\n\n")
+    #####print(town_outages, '\n\n\n')
+    #####print('Event df early definiton:', event_df, "\n\n\n")
 
     ### PHASE 2.1: Function for weather data retrieval:
 
@@ -383,9 +393,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         across the group of grid cells associated with all towns listed or 
         through some other means.
     '''
-    
-    # Define empty dataframe to store driver-maximized events
-    driver_maximized_events = pd.DataFrame()
+
+    # PHASE 3.1 - Defining maximum data through use of functions created previously
 
     # Iterate through event entries, maximizing drivers and adding them to df
 
@@ -394,11 +403,31 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
     ## Iterate through event entries, maximizing drivers and adding them to list
     for index, row in event_df.iterrows():  # iterrows returns (index, row) tuple
-        maximized_driver_event = weather_data_retrieval(row)  # row[1] is the Series
+        maximized_driver_event = weather_data_retrieval(row)
         driver_maximized_events_list.append(maximized_driver_event)
 
     ## After loop, convert list into DataFrame
-    driver_maximized_events = pd.concat(driver_maximized_events_list, ignore_index=True)
+    driver_maximized_events = pd.DataFrame(driver_maximized_events_list)
+
+    # PHASE 3.2 - Merge back to event_df 
+
+    '''
+    Now that we have extracted maximum values, let's merge our new 
+    driver covariates back into our events df to have outcomes
+    and covariates in the same place.
+    '''
+
+    #####print(event_df, "\n\n\n\n\n")
+    #####print(driver_maximized_events, "\n\n\n\n\n")
+
+    final_df = pd.merge(event_df, 
+                     driver_maximized_events[['storm_start_datetime', 'towns_affected', 'max_wind_velo', 'max_precip_intensity']], 
+                     on=['storm_start_datetime', 'towns_affected'], 
+                     how='left')
+
+    #####print(final_df)
+
+    # PHASE 3.3 - Return & save data
 
     # Save out to file
     driver_maximized_events.to_csv('../data/driver_maximized_events.csv')
