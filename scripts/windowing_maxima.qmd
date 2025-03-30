@@ -366,10 +366,10 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         ## Return the values
         return max_wind_velo, max_precip_intensity
 
-    ### PHASE 2.2: TO BE EDITED LATER. EXECUTION OF WEATHER DATA RETRIEVAL ###
+#####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
 
     ''' 
-        This section will allow us to create the framework for connecting
+        This section will allow us to execute the framework for connecting
         the events to weather data. 
 
         It will start by doing this relatively naively, by only connecting
@@ -380,23 +380,27 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         across the group of grid cells associated with all towns listed or 
         through some other means.
     '''
+    
+    # Define empty dataframe to store driver-maximized events
+    driver_maximized_events = pd.DataFrame
 
-#####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
+    # Iterate through event entries, maximizing drivers and adding them to df
+    for row in event_df.iterrows(): 
+        maximized_driver_event = weather_data_retrieval(row)
+        driver_maximized_events = driver_maximized_events.append(maximized_driver_event)
 
-    # driver_maximized_events = 
-
-    # driver_maximized_events.to_csv('../data/driver_maximized_events.csv')
-    #return driver_maximized_events
-
-    ## I'll need to come up with a protocol to associate each event with a grid cell (and more importantly, to a merged_csv to retrieve data.) 
-
+    # Save out to file
+    driver_maximized_events.to_csv('../data/driver_maximized_events.csv')
+    
+    # Also return the df locally to evaluate
+    return driver_maximized_events
 ```
 
 ``` {python}
 #| eval: true
 result = windowing_maxima()
+print(result)
 ```
-
 
 ------------------
 Diagnostics:
