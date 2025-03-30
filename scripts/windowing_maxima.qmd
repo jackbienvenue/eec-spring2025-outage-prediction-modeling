@@ -324,16 +324,46 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
         # DEFINING MAXIMUM WIND VELOCITY
 
-            #VECTORS!
-        
-        max_wind_velo = 1
+        ## Triangulate wind vectors to get wind velocity
+        weather_data['wind_velo'] = (weather_data['u10']**2 + weather_data['v10']**2)**(0.5)
+
+        ## Drop first (-25th) hour so it does not get selected
+        weather_data_without_first = weather_data.drop(index=0)
+
+        ## Identify maximum
+        max_wind_velo = weather_data_without_first['wind_velo'].max()
 
         # DEFINING MAXIMUM PRECIPITATION INTENSITY
 
             ## Special attention to cumulative nature of entries
-        max_precip_intensity = 1
 
+        ## Calculate hourly rate by subtracting previous entry
+        weather_data['precip_intensity'] = weather_data['tp'].diff().fillna(0)
+            ### Note, this fills NA values with 0, which is intended to ensure 
+            ### that artificially high values don't get included and selected.
 
+        ## Indicate when day changes occur
+        weather_data['day_change'] = (weather_data['time'].dt.hour == 1) & weather_data['time'].dt.date.diff().ne(pd.Timedelta(0))
+            ### This is very important, as weather events start at different
+            ### times. We need to know how to identify the day changes for 
+            ### calculation based on cumulative values for ['tp'].
+            ### This finds when its a new day & 1am, where cumulative values
+            ### effectively reset in our dataframe.
+
+        ## Reset values for new day
+        weather_data['hourly_precip'] = weather_data.apply(
+            lambda row: row['tp'] if row['day_change'] else row['hourly_precip'], axis=1)
+
+        ## Remove day_change indicator column 
+        weather_data.drop('day_change', axis=1, inplace=True)
+
+        ## Define maximum precipitation intensity for the window
+        max_precip_intensity = weather_data_without_first['precip_intensity'].max()
+            ### We're using weather_data_without_first here because we no longer
+            ### need to consider the extra value which was just there for proper
+            ### calculation from cumulative values for precipitation.
+
+        ## Return the values
         return max_wind_velo, max_precip_intensity
 
     ### PHASE 2.2: TO BE EDITED LATER. EXECUTION OF WEATHER DATA RETRIEVAL ###
