@@ -101,7 +101,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
         ### FOR SPEED OF DEVELOPMENT:
 
-    #####gdf = gdf.tail()
+    gdf = gdf.head()
 
         ### -------DELETE LATER---------
 
@@ -242,8 +242,9 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         customers_affected=('customers_affected', 'sum')  # Sum customers affected
         ).reset_index()
 
-    #####print(joined_gc_towns, "\n\n\n")
-    #####print(town_outages, '\n\n\n')
+    print('joined gc towns:', joined_gc_towns, "\n\n\n")
+    print('unique towns:', joined_gc_towns['TOWN_NAME'].value_counts())
+    print('town outages:', town_outages, '\n\n\n')
     #####print('Event df early definiton:', event_df, "\n\n\n")
 
     ### PHASE 2.1: Function for weather data retrieval:
@@ -341,7 +342,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         weather_data_without_first = weather_data.drop(index=0)
 
         ## Identify maximum
-        max_wind_velo = weather_data_without_first['wind_velo'].max()
+        max_wind_velo = round(weather_data_without_first['wind_velo'].max(), 5)
 
         # DEFINING MAXIMUM PRECIPITATION INTENSITY
 
@@ -371,7 +372,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         weather_data_without_first = weather_data.drop(index=0)
 
         ## Define maximum precipitation intensity for the window
-        max_precip_intensity = weather_data_without_first['precip_intensity'].max()
+        max_precip_intensity = round(weather_data_without_first['precip_intensity'].max(), 5)
             ### We're using weather_data_without_first here because we no longer
             ### need to consider the extra value which was just there for proper
             ### calculation from cumulative values for precipitation.
