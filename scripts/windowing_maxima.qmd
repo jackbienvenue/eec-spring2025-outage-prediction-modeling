@@ -264,7 +264,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         '''
 
         # Find the alphabetically-first town listed and extract it
-        town = event['towns_affected'].apply(lambda x: x.split(',')[0])
+        town = event['towns_affected'].split(',')[0]
 
         # Check if we find a match for the town name
         if town in joined_gc_towns['TOWN_NAME'].values:
@@ -274,7 +274,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
             # After extracting filename, open file 
                 # Build file path
-            file_path = weather_data_dir.asstr + '/' + filename.asstr
+            file_path = weather_data_dir + '/' + filename
 
             # Read in relevant weather data
             weather_data = pd.read_csv(file_path)
@@ -320,7 +320,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         weather_event_subset = weather_data[(weather_data['time'] >= prior_25.iloc[0]) & 
                                     (weather_data['time'] <= after_24.iloc[0])]
 
-        print(weather_event_subset)
+        #####print(weather_event_subset)
 
         # DEFINING MAXIMUM WIND VELOCITY
 
@@ -351,11 +351,14 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
             ### effectively reset in our dataframe.
 
         ## Reset values for new day
-        weather_data['hourly_precip'] = weather_data.apply(
-            lambda row: row['tp'] if row['day_change'] else row['hourly_precip'], axis=1)
+        weather_data['precip_intensity'] = weather_data.apply(
+            lambda row: row['tp'] if row['day_change'] else row['precip_intensity'], axis=1)
 
         ## Remove day_change indicator column 
         weather_data.drop('day_change', axis=1, inplace=True)
+
+        ## Drop first (-25th) hour so it does not get selected
+        weather_data_without_first = weather_data.drop(index=0)
 
         ## Define maximum precipitation intensity for the window
         max_precip_intensity = weather_data_without_first['precip_intensity'].max()
@@ -382,12 +385,20 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     '''
     
     # Define empty dataframe to store driver-maximized events
-    driver_maximized_events = pd.DataFrame
+    driver_maximized_events = pd.DataFrame()
 
     # Iterate through event entries, maximizing drivers and adding them to df
-    for row in event_df.iterrows(): 
-        maximized_driver_event = weather_data_retrieval(row)
-        driver_maximized_events = driver_maximized_events.append(maximized_driver_event)
+
+    ## Define empty list to collect driver-maximized events
+    driver_maximized_events_list = []
+
+    ## Iterate through event entries, maximizing drivers and adding them to list
+    for index, row in event_df.iterrows():  # iterrows returns (index, row) tuple
+        maximized_driver_event = weather_data_retrieval(row)  # row[1] is the Series
+        driver_maximized_events_list.append(maximized_driver_event)
+
+    ## After loop, convert list into DataFrame
+    driver_maximized_events = pd.concat(driver_maximized_events_list, ignore_index=True)
 
     # Save out to file
     driver_maximized_events.to_csv('../data/driver_maximized_events.csv')
