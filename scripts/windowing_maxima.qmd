@@ -95,24 +95,20 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
     # Phase 1.2: READ IN OUTAGE DATA
 
-    gdf = gpd.read_file(outage_data)
+    town_outages = gpd.read_file(outage_data)
 
     # Phase 1.3: Clean datetime formatting
 
-        ### FOR SPEED OF DEVELOPMENT:
-
-    gdf = gdf.head()
-
-        ### -------DELETE LATER---------
-
     ## Remove extraneous "+00:00" timezone correction upon datetime transformation
-    gdf['storm_start_datetime'] = pd.to_datetime(
-        gdf['storm_start_datetime']).dt.tz_convert(None)
+    town_outages['storm_start_datetime'] = pd.to_datetime(
+        town_outages['storm_start_datetime']).dt.tz_convert(None)
 
     # Phase 1.4: Merge Grid Cells to match towns on grid cell centroid to town intersection:
 
     ## Define gdf for ct towns
     ct_towns_gdf = gpd.read_file(ct_towns_shp)
+    ### Add centroid attribute to towns:
+    ct_towns_gdf['centroid'] = ct_towns_gdf['geometry'].centroid
 
     ## Filter towns to make sure extraneous rows are removed
     ct_towns_gdf = ct_towns_gdf[
@@ -141,8 +137,31 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
 
     ## Perform spatial join of towns and grid cells
-    joined_gc_towns = gpd.sjoin(grid_cells_gdf, ct_towns_gdf, 
-                        how="left", predicate="within")
+
+    ### Calculate the distance matrix between all towns' centroids and grid cells' centroids
+    distance_matrix = ct_towns_gdf['centroid'].apply(
+        lambda town_centroid: grid_cells_gdf['centroid'].distance(town_centroid)
+    ).T
+
+    ### Find nearest grid cell for each town
+    nearest_grid_cell_idx = distance_matrix.idxmin(axis=1)
+
+    ### Combine nearest grid cell and town data
+    nearest_grid_cells = grid_cells_gdf.loc[nearest_grid_cell_idx].reset_index(drop=True)
+    
+    ### Assignment of grid cells to towns
+    nearest_grid_cells['town_name'] = ct_towns_gdf.loc[nearest_grid_cell_idx, 'TOWN_NAME'].values
+
+    ### Drop repeated columns pertaining to town centroid and geometry
+    ### to avoid errors later 
+    town_data = ct_towns_gdf.drop(columns=['centroid', 'geometry'])
+    combined_data = pd.concat([nearest_grid_cells, town_data], axis=1)
+
+    ### Create gdf from the combined data
+    joined_gc_towns = gpd.GeoDataFrame(combined_data, geometry=nearest_grid_cells['centroid'])
+
+    ## Ensure the geometry column is correctly set (this might be needed depending on the context)
+    joined_gc_towns.set_geometry('geometry', inplace=True)
 
     joined_gc_towns = joined_gc_towns.dropna()
 
@@ -213,9 +232,6 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     Now, the grid cell centroids are all merged to towns, and we can match towns 
     '''
 
-    ## Rename gdf (town outages) for clarity:
-    town_outages = gdf
-
     # Identify and separate events
 
         ## Note: The gdf contains an entry for each town each time it is
@@ -240,15 +256,11 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         customers_affected=('customers_affected', 'sum')  # Sum customers affected
         ).reset_index()
 
+    print('grid_cells_gdf:', grid_cells_gdf, "\n\n\n")
     print('ct_towns_gdf:', ct_towns_gdf, "\n\n\n")
-
-    sorted_towns = ct_towns_gdf['TOWN_NAME'].value_counts().sort_index()
-    # Print the sorted output
-    print('Unique towns (sorted alphabetically):', sorted_towns)
-    
     print('joined gc towns:', joined_gc_towns, "\n\n\n")
-    print('unique towns:', joined_gc_towns['TOWN_NAME'].value_counts())
-    print('town outages:', town_outages, '\n\n\n')
+    #####print('unique towns:', joined_gc_towns['TOWN_NAME'].value_counts())
+    #####print('town outages:', town_outages, '\n\n\n')
     #####print('Event df early definiton:', event_df, "\n\n\n")
 
     ### PHASE 2.1: Function for weather data retrieval:
