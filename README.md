@@ -111,7 +111,9 @@ Data:
 
 Begin by merging the outage data with the shapefiles using scripts/outage_shapefile_merge.qmd.
 
-Continue onto scripts/windowing_maxima.qmd.
+Continue onto scripts/windowing_maxima.qmd to find peak precipitation intensity and wind velocity in a 48 hour window surrounding the storm start time.
+
+Model using modeling/modeling.qmd.
 
 ---
 
@@ -120,5 +122,5 @@ Continue onto scripts/windowing_maxima.qmd.
 Best of luck and happy modeling!
 
 <p align="center">
-  <img src="images/Rain_over_water_Unsplash.jpg" width="80%">
+  <img src="figures/3D_MLR.png" width="80%">
 </p>
