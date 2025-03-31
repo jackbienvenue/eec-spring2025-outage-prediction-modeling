@@ -333,78 +333,56 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     def window_maximizer_helper(weather_data, storm_start_datetime):
 
         # PRELIMINARIES:
+        ## Ensure datetime format
+        storm_start_datetime = pd.to_datetime(storm_start_datetime)
 
         ## ID'ing window bounds:
         ### Create day-before threshold
-        prior_25 = event_df['storm_start_datetime'] - pd.Timedelta(hours=25) 
-        '''
-        Why 25 hours here instead of 24? Precipiation is measured cumulatively
-        for each day in our dataset, so we need to extract an extra entry before
-        our first windowed hour (hour = -24:00:00 from storm start) so that we
-        can subtract the already-accumulated precipitation and convert the rest of
-        entries to allow list the hourly intensity.
-        '''
-        ### Create day-after threshold
-        after_24 = event_df['storm_start_datetime'] + pd.Timedelta(hours=24) 
+        prior_25 = storm_start_datetime - pd.Timedelta(hours=25) 
 
-        ## Subset weather data to prior_24 -1 hour, after_24.
+        ### Create day-after threshold
+        after_24 = storm_start_datetime + pd.Timedelta(hours=24) 
+
+        ## Subset weather data to prior_25 -1 hour, after_24.
 
         ### Ensure datetime format to begin
         weather_data['time'] = pd.to_datetime(weather_data['time'])
-        event_df['storm_start_datetime'] = pd.to_datetime(event_df['storm_start_datetime'])
 
-        ### Perform subsetting
-        weather_event_subset = weather_data[(weather_data['time'] >= prior_25.iloc[0]) & 
-                                    (weather_data['time'] <= after_24.iloc[0])]
-
-        #####print(weather_event_subset)
+        ### Perform subsetting (ensure it's a copy of the slice)
+        weather_event_subset = weather_data[(weather_data['time'] >= prior_25) & (weather_data['time'] <= after_24)].copy()
 
         # DEFINING MAXIMUM WIND VELOCITY
-
         ## Triangulate wind vectors to get wind velocity
-        weather_data['wind_velo'] = (weather_data['u10']**2 + weather_data['v10']**2)**(0.5)
+        weather_event_subset.loc[:, 'wind_velo'] = (weather_event_subset['u10']**2 + weather_event_subset['v10']**2)**(0.5)
 
-        ## Drop first (-25th) hour so it does not get selected
-        weather_data_without_first = weather_data.drop(index=0)
-
-        ## Identify maximum
-        max_wind_velo = round(weather_data_without_first['wind_velo'].max(), 5)
-
-        # DEFINING MAXIMUM PRECIPITATION INTENSITY
-
-            ## Special attention to cumulative nature of entries
-
+        # DEFINING PRECIPITATION INTENSITY
         ## Calculate hourly rate by subtracting previous entry
-        weather_data['precip_intensity'] = weather_data['tp'].diff().fillna(0)
-            ### Note, this fills NA values with 0, which is intended to ensure 
-            ### that artificially high values don't get included and selected.
+        weather_event_subset.loc[:, 'precip_intensity'] = weather_event_subset['tp'].diff().fillna(0)
 
         ## Indicate when day changes occur
-        weather_data['day_change'] = (weather_data['time'].dt.hour == 1) & weather_data['time'].dt.date.diff().ne(pd.Timedelta(0))
-            ### This is very important, as weather events start at different
-            ### times. We need to know how to identify the day changes for 
-            ### calculation based on cumulative values for ['tp'].
-            ### This finds when its a new day & 1am, where cumulative values
-            ### effectively reset in our dataframe.
+        weather_event_subset.loc[:, 'day_change'] = (weather_event_subset['time'].dt.hour == 1) & weather_event_subset['time'].dt.date.diff().ne(pd.Timedelta(0))
 
         ## Reset values for new day
-        weather_data['precip_intensity'] = weather_data.apply(
+        weather_event_subset.loc[:, 'precip_intensity'] = weather_event_subset.apply(
             lambda row: row['tp'] if row['day_change'] else row['precip_intensity'], axis=1)
 
         ## Remove day_change indicator column 
-        weather_data.drop('day_change', axis=1, inplace=True)
+        weather_event_subset.drop('day_change', axis=1, inplace=True)
 
         ## Drop first (-25th) hour so it does not get selected
-        weather_data_without_first = weather_data.drop(index=0)
+        weather_event_subset.reset_index(drop=True, inplace=True)
+        weather_data_without_first = weather_event_subset.drop(index=0)
+
+        ## Identify maximum wind velocity
+        max_wind_velo = round(weather_data_without_first['wind_velo'].max(), 5)
 
         ## Define maximum precipitation intensity for the window
         max_precip_intensity = round(weather_data_without_first['precip_intensity'].max(), 5)
-            ### We're using weather_data_without_first here because we no longer
-            ### need to consider the extra value which was just there for proper
-            ### calculation from cumulative values for precipitation.
 
         ## Return the values
         return max_wind_velo, max_precip_intensity
+
+
 
 #####-----   FUNCTION PHASE 3: DEFINING OUTPUTS   -----#####
 
