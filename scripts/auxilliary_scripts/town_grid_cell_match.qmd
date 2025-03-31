@@ -1,0 +1,110 @@
+---
+title: Town, Grid Cell Matching
+author: Jack Bienvenue
+date: 31 March, 2025
+format: html
+---
+
+# Description
+
+In this file, we will validate the process of matching grid cells to towns on a nearest centroid-to-centroid basis.
+
+``` {python}
+import pandas as pd
+import geopandas as gpd
+
+# Load northeast towns, ct boundary shapefile
+towns_gdf = gpd.read_file('../../data/northeast_towns_shapefile/Northeast_Town_Polygon.shp')
+ct_gdf = gpd.read_file('../../data/ct_shapefile/Connecticut_Poly.shp')
+
+# Put shapefiles in the same CRS (if they are not already)
+towns_gdf = towns_gdf.to_crs(ct_gdf.crs)
+
+# Perform the intersection, getting CT towns
+ct_towns_gdf = gpd.overlay(towns_gdf, ct_gdf, how='intersection')
+town_outages = gpd.read_file("../../data/town_outages.csv")
+town_outages['storm_start_datetime'] = pd.to_datetime(
+        town_outages['storm_start_datetime']).dt.tz_convert(None)
+ct_towns_gdf = gpd.read_file("../../data/ct_towns/ct_towns.shp")
+
+# Define ct town centroids
+ct_towns_gdf['centroid'] = ct_towns_gdf['geometry'].centroid
+
+ct_towns_gdf = ct_towns_gdf[
+    (ct_towns_gdf['STATE'] == 'Connecticut') & 
+    (ct_towns_gdf['STATE_COD'] == 'CT') & 
+    pd.notna(ct_towns_gdf['MAP_LABEL'])
+]
+ct_towns_gdf.reset_index(inplace=True)
+
+## Further cleaning
+ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI', 
+'TOWN_FIELD', 'LABEL_FLAG', 'CT_LEGEND', 'MA_LEGEND', 'ME_LEGEND', 
+'NH_LEGEND', 'NJ_LEGEND', 'NY_LEGEND', 'RI_LEGEND', 'VT_LEGEND', 
+'CT_LABEL_Y', 'CT_LABEL_N', 'LAND_CLASS', "CNTY_FIELD", "CNTY_COD", 
+'STATE_NAME', 'STATE_COD', 'MAP_LABEL', "index"])
+
+## Add centroid attribute to grid cells:
+grid_cells_gdf = gpd.read_file("../../data/grid_cell_shapefile/grid_cells.shp")
+grid_cells_gdf['centroid'] = grid_cells_gdf['geometry'].centroid
+
+## Specify centroids as active geometry to allow join
+grid_cells_gdf = grid_cells_gdf.set_geometry('centroid')
+
+## Project both to state plane (CT) for best results
+grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
+ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
+
+distance_matrix = ct_towns_gdf['centroid'].apply(
+    lambda town_centroid: grid_cells_gdf['centroid'].distance(town_centroid)
+).T
+
+#print(distance_matrix)
+```
+
+``` {python}
+import folium
+from folium import plugins
+
+# Set the center of the map (you can adjust the lat/lon here)
+center = [41.6032, -73.0877]  # Rough center of Connecticut
+
+# Ensure both are in the correct CRS
+grid_cells_gdf = grid_cells_gdf.to_crs(epsg=4326)
+ct_towns_gdf = ct_towns_gdf.set_geometry('centroid')
+ct_towns_gdf = ct_towns_gdf.to_crs(epsg=4326)
+
+# Create the base map
+m = folium.Map(location=center, zoom_start=9)
+
+# Check if centroids are available for ct_towns_gdf
+if 'centroid' not in ct_towns_gdf.columns:
+    ct_towns_gdf['centroid'] = ct_towns_gdf['geometry'].centroid
+
+# Plot Connecticut towns (centroids as red markers)
+for _, row in ct_towns_gdf.iterrows():
+    folium.Marker(
+        location=[row['centroid'].y, row['centroid'].x],
+        popup=row['TOWN_NAME'], 
+        icon=folium.Icon(color='red', icon='info-sign')
+    ).add_to(m)
+
+# Plot grid cell centroids (green circle markers)
+for _, row in grid_cells_gdf.iterrows():
+    folium.CircleMarker(
+        location=[row['centroid'].y, row['centroid'].x],
+        radius=5,  # Size of the marker
+        color='green',
+        fill=True,
+        fill_color='green',
+        fill_opacity=0.6,
+        popup=f"Grid Cell ID: {row.name}",  # Display grid cell ID
+    ).add_to(m)
+
+m
+
+```
+
+``` {python}
+print(ct_towns_gdf)
+```
