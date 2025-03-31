@@ -86,7 +86,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
     '''
 
-#####-----FUNCTION PHASE 1: READ IN DATA, MERGE GRID CELLS TO TOWNS-----#####
+#####-----FUNCTION PHASE 1: READ IN DATA, MERGE GRID CELLS TO TOWNS-----##### 
 
     # Phase 1.1: READ IN SHAPEFILE FOR CT TOWNS, GRID CELLS
 
