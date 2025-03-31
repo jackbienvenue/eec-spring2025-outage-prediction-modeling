@@ -28,6 +28,7 @@ town_outages['storm_start_datetime'] = pd.to_datetime(
 ct_towns_gdf = gpd.read_file("../../data/ct_towns/ct_towns.shp")
 
 # Define ct town centroids
+ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
 ct_towns_gdf['centroid'] = ct_towns_gdf['geometry'].centroid
 
 ct_towns_gdf = ct_towns_gdf[
@@ -46,23 +47,49 @@ ct_towns_gdf = ct_towns_gdf.drop(columns=['ACREAGE', 'AREA_SQMI',
 
 ## Add centroid attribute to grid cells:
 grid_cells_gdf = gpd.read_file("../../data/grid_cell_shapefile/grid_cells.shp")
+grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
 grid_cells_gdf['centroid'] = grid_cells_gdf['geometry'].centroid
 
 ## Specify centroids as active geometry to allow join
 grid_cells_gdf = grid_cells_gdf.set_geometry('centroid')
+```
 
-## Project both to state plane (CT) for best results
-grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
-ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
+```{python}
+results = []
 
-distance_matrix = ct_towns_gdf['centroid'].apply(
-    lambda town_centroid: grid_cells_gdf['centroid'].distance(town_centroid)
-).T
+# Loop through each town
+for _, town in ct_towns_gdf.iterrows():
+    # Get the centroid of the town
+    town_centroid = town['centroid']
+    
+    # Calculate the distance from the town's centroid to each grid cell centroid
+    grid_cells_gdf['distance'] = grid_cells_gdf['centroid'].distance(town_centroid)
+    
+    # Find the index of the closest grid cell
+    closest_grid_cell_index = grid_cells_gdf['distance'].idxmin()
+    
+    # Get the FID and centroid of the closest grid cell
+    closest_grid_cell = grid_cells_gdf.loc[closest_grid_cell_index]
+    grid_cell_fid = closest_grid_cell['FID']  # Adjust the column name if necessary
+    grid_cell_centroid = closest_grid_cell['centroid']
+    
+    # Store the result
+    results.append({
+        'town_name': town['TOWN_NAME'],
+        'grid_cell_fid': grid_cell_fid,
+        'grid_cell_centroid': grid_cell_centroid
+    })
 
-#print(distance_matrix)
+# Convert results to a DataFrame
+result_df = pd.DataFrame(results)
+
+# Show the resulting DataFrame
+print(result_df)
 ```
 
 ``` {python}
+#| echo: false
+#| eval: true
 import folium
 from folium import plugins
 
@@ -83,10 +110,12 @@ if 'centroid' not in ct_towns_gdf.columns:
 
 # Plot Connecticut towns (centroids as red markers)
 for _, row in ct_towns_gdf.iterrows():
-    folium.Marker(
+    folium.CircleMarker(
         location=[row['centroid'].y, row['centroid'].x],
-        popup=row['TOWN_NAME'], 
-        icon=folium.Icon(color='red', icon='info-sign')
+        popup=row['TOWN_NAME'],
+        fill_color='red',
+        color = 'red',
+        radius=5
     ).add_to(m)
 
 # Plot grid cell centroids (green circle markers)
@@ -103,8 +132,4 @@ for _, row in grid_cells_gdf.iterrows():
 
 m
 
-```
-
-``` {python}
-print(ct_towns_gdf)
 ```

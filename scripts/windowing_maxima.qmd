@@ -89,12 +89,10 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 #####-----FUNCTION PHASE 1: READ IN DATA, MERGE GRID CELLS TO TOWNS-----##### 
 
     # Phase 1.1: READ IN SHAPEFILE FOR CT TOWNS, GRID CELLS
-
     ct_towns_shp = town_shapefile # from arg
     grid_cells_shp = grid_cell_shapefile # from arg
 
     # Phase 1.2: READ IN OUTAGE DATA
-
     town_outages = gpd.read_file(outage_data)
 
     # Phase 1.3: Clean datetime formatting
@@ -108,6 +106,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     ## Define gdf for ct towns
     ct_towns_gdf = gpd.read_file(ct_towns_shp)
     ### Add centroid attribute to towns:
+    ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
     ct_towns_gdf['centroid'] = ct_towns_gdf['geometry'].centroid
 
     ## Filter towns to make sure extraneous rows are removed
@@ -127,45 +126,56 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
     ## Add centroid attribute to grid cells:
     grid_cells_gdf = gpd.read_file(grid_cells_shp)
+    grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
     grid_cells_gdf['centroid'] = grid_cells_gdf['geometry'].centroid
 
     ## Specify centroids as active geometry to allow join
     grid_cells_gdf = grid_cells_gdf.set_geometry('centroid')
-    
-    ## Project both to state plane (CT) for best results
-    grid_cells_gdf = grid_cells_gdf.to_crs(epsg=26995)
-    ct_towns_gdf = ct_towns_gdf.to_crs(epsg=26995)
 
     ## Perform spatial join of towns and grid cells
 
-    ### Calculate the distance matrix between all towns' centroids and grid cells' centroids
-    distance_matrix = ct_towns_gdf['centroid'].apply(
-        lambda town_centroid: grid_cells_gdf['centroid'].distance(town_centroid)
-    ).T
+    results = []
 
-    ### Find nearest grid cell for each town
-    nearest_grid_cell_idx = distance_matrix.idxmin(axis=1)
+    # Loop through each town
+    for _, town in ct_towns_gdf.iterrows():
+        # Get the centroid of the town
+        town_centroid = town['centroid']
+        
+        # Calculate the distance from the town's centroid to each grid cell centroid
+        grid_cells_gdf['distance'] = grid_cells_gdf['centroid'].distance(town_centroid)
+        
+        # Find the index of the closest grid cell
+        closest_grid_cell_index = grid_cells_gdf['distance'].idxmin()
+        
+        # Get the FID and centroid of the closest grid cell
+        closest_grid_cell = grid_cells_gdf.loc[closest_grid_cell_index]
+        grid_cell_fid = closest_grid_cell['FID']  # Adjust the column name if necessary
+        grid_cell_centroid = closest_grid_cell['centroid']
+        
+        # Store the result
+        results.append({
+            'town_name': town['TOWN_NAME'],
+            'grid_cell_fid': grid_cell_fid,
+            'grid_cell_centroid': grid_cell_centroid
+        })
 
-    ### Combine nearest grid cell and town data
-    nearest_grid_cells = grid_cells_gdf.loc[nearest_grid_cell_idx].reset_index(drop=True)
-    
-    ### Assignment of grid cells to towns
-    nearest_grid_cells['town_name'] = ct_towns_gdf.loc[nearest_grid_cell_idx, 'TOWN_NAME'].values
-
-    ### Drop repeated columns pertaining to town centroid and geometry
-    ### to avoid errors later 
-    town_data = ct_towns_gdf.drop(columns=['centroid', 'geometry'])
-    combined_data = pd.concat([nearest_grid_cells, town_data], axis=1)
-
-    ### Create gdf from the combined data
-    joined_gc_towns = gpd.GeoDataFrame(combined_data, geometry=nearest_grid_cells['centroid'])
+    # Convert results to a DataFrame
+    joined_gc_towns = pd.DataFrame(results)
 
     ## Ensure the geometry column is correctly set (this might be needed depending on the context)
-    joined_gc_towns.set_geometry('geometry', inplace=True)
+    ### Convert the DataFrame to a GeoDataFrame
+    joined_gc_towns = gpd.GeoDataFrame(joined_gc_towns, geometry='grid_cell_centroid')
+    joined_gc_towns = joined_gc_towns.set_crs('EPSG:26995', allow_override=True, inplace=True)
 
-    joined_gc_towns = joined_gc_towns.dropna()
+    ### Now set the geometry to the desired column (if it's not already set)
+    joined_gc_towns.set_geometry('grid_cell_centroid', inplace=True)
 
-    joined_gc_towns['centroid'] = joined_gc_towns['centroid'].to_crs(epsg=4326)
+    ### Set to WGS1984 projection
+    joined_gc_towns['grid_cell_centroid'] = joined_gc_towns['grid_cell_centroid'].to_crs(epsg=4326)
+
+    ##### DELETE LATER! FOR PROCESSING SPEED:
+
+    #joined_gc_towns = joined_gc_towns.head(10)
 
     # Phase 1.5: Connect grid cell points to weather data:
 
@@ -185,7 +195,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
     ## Iterate over each row in the GeoDataFrame
     for index, row in joined_gc_towns.iterrows():
         ## Access the centroid geometry
-        centroid_point = row['centroid']
+        centroid_point = row['grid_cell_centroid']
         
         ## Extract longitude (x) and latitude (y)
         lon_values.append(centroid_point.x)
@@ -256,8 +266,8 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         customers_affected=('customers_affected', 'sum')  # Sum customers affected
         ).reset_index()
 
-    print('grid_cells_gdf:', grid_cells_gdf, "\n\n\n")
-    print('ct_towns_gdf:', ct_towns_gdf, "\n\n\n")
+    print ('grid_cells_gdf:', grid_cells_gdf, "\n\n\n")
+    #####print('ct_towns_gdf:', ct_towns_gdf, "\n\n\n")
     print('joined gc towns:', joined_gc_towns, "\n\n\n")
     #####print('unique towns:', joined_gc_towns['TOWN_NAME'].value_counts())
     #####print('town outages:', town_outages, '\n\n\n')
@@ -294,10 +304,10 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
         town = event['towns_affected'].split(',')[0]
 
         # Check if we find a match for the town name
-        if town in joined_gc_towns['TOWN_NAME'].values:
+        if town in joined_gc_towns['town_name'].values:
 
             # If we do, extract target filename
-            filename = joined_gc_towns.loc[joined_gc_towns['TOWN_NAME'] == town, 'filename'].iloc[0]
+            filename = joined_gc_towns.loc[joined_gc_towns['town_name'] == town, 'filename'].iloc[0]
 
             # After extracting filename, open file 
                 # Build file path
@@ -314,7 +324,7 @@ def windowing_maxima(town_shapefile = "../data/ct_towns/ct_towns.shp",
 
         else:
             # If not, report that we cannot find the town
-            print("Town '{town}' not found in town_outages")
+            print("Town '{town}' not found in joined_gc_towns")
             event['max_wind_velo'] = None
             event['max_precip_intensity'] = None
 
